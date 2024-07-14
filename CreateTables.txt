@@ -1,0 +1,33 @@
+CREATE TABLE Employer (
+    employer_id SERIAL PRIMARY KEY,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE Quiz (
+    quiz_id SERIAL PRIMARY KEY,
+    employer_id INT REFERENCES Employer(employer_id),
+    title VARCHAR(255) NOT NULL,
+    description TEXT
+);
+
+CREATE TABLE Questions (
+    question_id SERIAL PRIMARY KEY,
+    quiz_id INT REFERENCES Quiz(quiz_id),
+    question_text TEXT NOT NULL,
+    question_type VARCHAR(20) NOT NULL,
+);
+
+CREATE TABLE Answers (
+    answer_id SERIAL PRIMARY KEY,
+    question_id INT REFERENCES Questions(question_id),
+    answer_text TEXT NOT NULL,
+    is_correct BOOLEAN NOT NULL DEFAULT FALSE,
+);
+
+CREATE TABLE Stats (
+    candidate_id SERIAL PRIMARY KEY,
+    link_id VARCHAR(10) UNIQUE NOT NULL,
+    quiz_id INT REFERENCES Quiz(quiz_id),
+    grade INT
+);
