@@ -15,6 +15,7 @@ def login():
 
 @app.route("/create-account", methods=["GET", "POST"])
 def create_account():
+    
     return 
 
 @app.route("/create-quiz", methods=["GET", "POST"])
