@@ -93,7 +93,7 @@ def create_account():
         conn.close()
     return 
 
-@app.route("/create-quiz", methods=["GET", "POST"])
+@app.route("/create-quiz", methods=["POST"])
 def create_quiz():
     data = request.json
 
