@@ -1,12 +1,12 @@
 from flask import Flask, request, jsonify
-import mysql.connector
-from mysql.connector import Error
+from flask_cors import CORS
+# import mysql.connector
+# from mysql.connector import Error
 
-
-# Configuration
+#Configuration
 
 app = Flask(__name__)
-
+CORS(app)
 
 # Routes 
 # Mostly just placeholders based on the specs until the database communication is implemented
@@ -15,7 +15,7 @@ app = Flask(__name__)
 def login():
      # Get JSON data from the POST request
     data = request.json
-    
+    print(data)
     email = data.get('email')
     password = data.get('password')
     
@@ -174,3 +174,8 @@ def modify_question():
 @app.route("/read-question", methods=["GET", "POST"])
 def read_question():
     return 
+
+# Listener
+if __name__ == "__main__":
+
+    app.run(port=4546, debug=True)
