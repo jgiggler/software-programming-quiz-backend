@@ -97,6 +97,9 @@ def create_account():
 def create_quiz():
     data = request.json
 
+    employer_id = data.get('employer_id')
+    quiz_title = data.get("title")
+    quiz_description = data.get("description")
     quiz_id = data.get('quiz_id')
     question_title = data.get('question_text')
     question_type = data.get('question_type')
@@ -104,13 +107,17 @@ def create_quiz():
     correct_answer_index = data.get('is_correct')
 
     # Validate input
-    if not quiz_id or not question_title or not question_type or not answers or correct_answer_index is None:
+    if not quiz_id or not question_title or not question_type or not answers or correct_answer_index or quiz_title or quiz_description is None:
         return jsonify({'error': 'Missing required fields'}), 400
 
     try:
         # Connect to the database
         conn = mysql.connector.connect(**db_config)
         cursor = conn.cursor()
+
+        # Insert into Quiz table
+        quiz_query = "INSERT INTO Questions (QuizID, EmployerID, title, description) VALUES (%s, %s, %s, %s)"
+        cursor.execute(quiz_query, (quiz_id, employer_id, quiz_title, quiz_description))
 
         # Insert question into Questions table
         question_query = "INSERT INTO Questions (QuizID, QuestionText, QuestionType) VALUES (%s, %s, %s)"
