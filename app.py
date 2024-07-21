@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+import database_actions as dba
 # import mysql.connector
 # from mysql.connector import Error
 
@@ -13,85 +14,48 @@ CORS(app)
 
 @app.route("/login", methods=["POST"])
 def login():
-     # Get JSON data from the POST request
+    # Get JSON data from the POST request
     data = request.json
-    print(data)
     email = data.get('email')
     password = data.get('password')
-    
+
     # Validate input
     if not email or not password:
         return jsonify({'error': 'Email and password are required!'}), 400
 
-    try:
-        # Connect to the database
-        conn = mysql.connector.connect(**db_config)
-        cursor = conn.cursor()
-        
-        # Prepare and execute SQL query to find the user
-        query = "SELECT email, password FROM employer WHERE email = %s"
-        cursor.execute(query, (email,))
-        
-        # Fetch the result
-        result = cursor.fetchone()
-        
-        if result:
-            employer_id, stored_password = result
-            # Check if the password matches
-            if password == stored_password:
-                return jsonify({'message': 'success', 'employer_id': employer_id}), 200
-            else:
-                return jsonify({'error': 'Invalid email or password'}), 401
-        else:
-            return jsonify({'error': 'Invalid email or password'}), 401
+    result = dba.login_query(email, password)
 
-    except mysql.connector.Error as err:
-        return jsonify({'error': str(err)}), 500
+    # Check for database error
+    if isinstance(result, dict) and 'error' in result:
+        return jsonify({'error': result['error']}), 500
+  
+    # Handle successful login
+    if result:
+        employer_id = result[0]  # Extract the employer ID from the tuple
+        return jsonify({'message': 'success', 'employer_id': employer_id}), 200
+  
+    # Handle invalid email or password
+    return jsonify({'error': 'Invalid email or password'}), 401
 
-    finally:
-        cursor.close()
-        conn.close()
-    return 
 
 @app.route("/create-account", methods=["POST"])
 def create_account():
-     # Get JSON data from the POST request
+    # Get JSON data from the POST request
     data = request.json
-    
     email = data.get('email')
     password = data.get('password')
-    
+
     # Validate input
     if not email or not password:
-        return jsonify({'error': 'Username and password are required!'}), 400
+        return jsonify({'error': 'Email and password are required!'}), 400
 
-    try:
-        # Connect to the database
-        conn = mysql.connector.connect(**db_config) # How do we connect? TODO: This is incorrect 
-        cursor = conn.cursor() # TODO: 
-        
-        # Prepare and execute SQL query
-        query = "INSERT INTO employer (email, password) VALUES (%s, %s)"
-        cursor.execute(query, (email, password))
-        
-        # Commit the transaction
-        conn.commit()
+    result = dba.create_account_query(email, password)
 
-        # Get the last inserted ID
-        employer_id = int(cursor.lastrowid)
-        
-        return jsonify({
-            'message': 'success, user created',
-            'employer_id': employer_id
-            }), 201
+    if 'error' in result:
+        return jsonify({'error': result['error']}), 500
 
-    except mysql.connector.Error as err:
-        return jsonify({'error': str(err)}), 500
+    return jsonify(result), 201
 
-    finally:
-        cursor.close()
-        conn.close()
-    return 
 
 @app.route("/create-quiz", methods=["POST"])
 def create_quiz():
