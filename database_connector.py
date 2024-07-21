@@ -16,3 +16,5 @@ def connect(command, data):
 
     cursor.close()
     cnx.close()
+
+connect()
