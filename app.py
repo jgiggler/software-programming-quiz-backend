@@ -1,25 +1,149 @@
-from flask import Flask
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+# import mysql.connector
+# from mysql.connector import Error
 
-
-# Configuration
+#Configuration
 
 app = Flask(__name__)
-
+CORS(app)
 
 # Routes 
 # Mostly just placeholders based on the specs until the database communication is implemented
 
-@app.route("/login", methods=["GET", "POST"])
+@app.route("/login", methods=["POST"])
 def login():
-    return 
-
-@app.route("/create-account", methods=["GET", "POST"])
-def create_account():
+     # Get JSON data from the POST request
+    data = request.json
+    print(data)
+    email = data.get('email')
+    password = data.get('password')
     
+    # Validate input
+    if not email or not password:
+        return jsonify({'error': 'Email and password are required!'}), 400
+
+    try:
+        # Connect to the database
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor()
+        
+        # Prepare and execute SQL query to find the user
+        query = "SELECT email, password FROM employer WHERE email = %s"
+        cursor.execute(query, (email,))
+        
+        # Fetch the result
+        result = cursor.fetchone()
+        
+        if result:
+            employer_id, stored_password = result
+            # Check if the password matches
+            if password == stored_password:
+                return jsonify({'message': 'success', 'employer_id': employer_id}), 200
+            else:
+                return jsonify({'error': 'Invalid email or password'}), 401
+        else:
+            return jsonify({'error': 'Invalid email or password'}), 401
+
+    except mysql.connector.Error as err:
+        return jsonify({'error': str(err)}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
     return 
 
-@app.route("/create-quiz", methods=["GET", "POST"])
+@app.route("/create-account", methods=["POST"])
+def create_account():
+     # Get JSON data from the POST request
+    data = request.json
+    
+    email = data.get('email')
+    password = data.get('password')
+    
+    # Validate input
+    if not email or not password:
+        return jsonify({'error': 'Username and password are required!'}), 400
+
+    try:
+        # Connect to the database
+        conn = mysql.connector.connect(**db_config) # How do we connect? TODO: This is incorrect 
+        cursor = conn.cursor() # TODO: 
+        
+        # Prepare and execute SQL query
+        query = "INSERT INTO employer (email, password) VALUES (%s, %s)"
+        cursor.execute(query, (email, password))
+        
+        # Commit the transaction
+        conn.commit()
+
+        # Get the last inserted ID
+        employer_id = int(cursor.lastrowid)
+        
+        return jsonify({
+            'message': 'success, user created',
+            'employer_id': employer_id
+            }), 201
+
+    except mysql.connector.Error as err:
+        return jsonify({'error': str(err)}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
+    return 
+
+@app.route("/create-quiz", methods=["POST"])
 def create_quiz():
+    data = request.json
+
+    employer_id = data.get('employer_id')
+    quiz_title = data.get("title")
+    for quizID in range(10):
+        if data.get(str(quizID)) is None:
+            return
+        quiz_description = data.get("description")
+        quiz_id = data.get(str(quizID))
+        question_title = data.get('question_text')
+        question_type = data.get('question_type')
+        answers = data.get('answers')
+        correct_answer_index = data.get('is_correct')
+
+        # Validate input
+        if not quiz_id or not question_title or not question_type or not answers or correct_answer_index or quiz_title or quiz_description is None:
+            return jsonify({'error': 'Missing required fields'}), 400
+
+        try:
+            # Connect to the database
+            conn = mysql.connector.connect(**db_config)
+            cursor = conn.cursor()
+
+            # Insert into Quiz table
+            quiz_query = "INSERT INTO Questions (QuizID, EmployerID, title, description) VALUES (%s, %s, %s, %s)"
+            cursor.execute(quiz_query, (quiz_id, employer_id, quiz_title, quiz_description))
+
+            # Insert question into Questions table
+            question_query = "INSERT INTO Questions (QuizID, QuestionText, QuestionType) VALUES (%s, %s, %s)"
+            cursor.execute(question_query, (quiz_id, question_title, question_type))
+            question_id = cursor.lastrowid
+
+            # Insert answers into Answers table
+            answer_query = "INSERT INTO Answers (QuestionID, AnswerText, is_correct) VALUES (%s, %s, %s)"
+            for index, answer in enumerate(answers):
+                is_correct = index in correct_answer_index
+                cursor.execute(answer_query, (question_id, answer, is_correct))
+
+            # Commit the transaction
+            conn.commit()
+
+            return jsonify({'message': 'success, quiz created!', 'quiz_id': quiz_id}), 201
+
+        except mysql.connector.Error as err:
+            return jsonify({'error': str(err)}), 500
+
+        finally:
+            cursor.close()
+            conn.close()
     return 
 
 @app.route("/delete-quiz", methods=["GET", "POST"])
@@ -53,3 +177,8 @@ def modify_question():
 @app.route("/read-question", methods=["GET", "POST"])
 def read_question():
     return 
+
+# Listener
+if __name__ == "__main__":
+
+    app.run(port=4546, debug=True)
