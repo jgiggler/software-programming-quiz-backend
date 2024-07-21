@@ -59,60 +59,33 @@ def create_account():
 
 @app.route("/create-quiz", methods=["POST"])
 def create_quiz():
+    # Get JSON data from the POST request
     data = request.json
 
-    employer_id = data.get('employer_id')
-    quiz_title = data.get("title")
-    for quizID in range(10):
-        if data.get(str(quizID)) is None:
-            return
-        quiz_description = data.get("description")
-        quiz_id = data.get(str(quizID))
-        question_title = data.get('question_text')
-        question_type = data.get('question_type')
-        answers = data.get('answers')
-        correct_answer_index = data.get('is_correct')
+    # Run query and retrieve the result 
+    result = dba.create_quiz(data)
 
-        # Validate input
-        if not quiz_id or not question_title or not question_type or not answers or correct_answer_index or quiz_title or quiz_description is None:
-            return jsonify({'error': 'Missing required fields'}), 400
+    if 'error' in result:
+        return jsonify({'error': result['error']}), 500
 
-        try:
-            # Connect to the database
-            conn = mysql.connector.connect(**db_config)
-            cursor = conn.cursor()
+    return jsonify(result), 201
 
-            # Insert into Quiz table
-            quiz_query = "INSERT INTO Questions (QuizID, EmployerID, title, description) VALUES (%s, %s, %s, %s)"
-            cursor.execute(quiz_query, (quiz_id, employer_id, quiz_title, quiz_description))
 
-            # Insert question into Questions table
-            question_query = "INSERT INTO Questions (QuizID, QuestionText, QuestionType) VALUES (%s, %s, %s)"
-            cursor.execute(question_query, (quiz_id, question_title, question_type))
-            question_id = cursor.lastrowid
-
-            # Insert answers into Answers table
-            answer_query = "INSERT INTO Answers (QuestionID, AnswerText, is_correct) VALUES (%s, %s, %s)"
-            for index, answer in enumerate(answers):
-                is_correct = index in correct_answer_index
-                cursor.execute(answer_query, (question_id, answer, is_correct))
-
-            # Commit the transaction
-            conn.commit()
-
-            return jsonify({'message': 'success, quiz created!', 'quiz_id': quiz_id}), 201
-
-        except mysql.connector.Error as err:
-            return jsonify({'error': str(err)}), 500
-
-        finally:
-            cursor.close()
-            conn.close()
-    return 
-
-@app.route("/delete-quiz", methods=["GET", "POST"])
+@app.route("/delete-quiz", methods=["POST"])
 def delete_quiz():
-    return 
+    data = request.json
+    employer_id = data.get('employer_id')
+    quiz_id = data.get('quiz_id')
+
+    if not employer_id or not quiz_id:
+        return jsonify({'error': 'Employer ID and Quiz ID are required!'}), 400
+
+    result = dba.delete_quiz(employer_id, quiz_id)
+
+    if 'error' in result:
+        return jsonify({'error': result['error']}), 500
+
+    return jsonify(result), 200
 
 @app.route("/update-quiz", methods=["GET", "POST"])
 def update_quiz():
