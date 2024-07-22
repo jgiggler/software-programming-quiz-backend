@@ -1,54 +1,48 @@
-from database_connector import connect
+from database_connector import DatabaseConnection
+import mysql.connector
 
 def login_query(email, password):
-  try:
-      conn = connect()
-      cursor = conn.cursor()
-
-      # Fetch the employer ID where email and password match
-      query = "SELECT ID FROM Employer WHERE Email = %s AND Password = %s"
-      cursor.execute(query, (email, password))
-
-      result = cursor.fetchone()  # This will be a tuple (ID,) or None if no match is found
-
-      return result
-
-  except mysql.connector.Error as err:
-      return {'error': str(err)}
-
-  finally:
-      cursor.close()
-      conn.close()
-
-
-def create_account_query(email, password):
     try:
-        conn = connect()
-        cursor = conn.cursor()
-        
-        # Prepare and execute SQL query
-        query = "INSERT INTO employer (email, password) VALUES (%s, %s)"
-        cursor.execute(query, (email, password))
-        
-        # Commit the transaction
-        conn.commit()
+        db = DatabaseConnection()
+        query = "SELECT ID FROM Employer WHERE Email = %s AND Password = %s"
+        data = (email, password)
 
-        # Get the last inserted ID
-        employer_id = int(cursor.lastrowid)
-        return {'message': 'success', 'employer_id': employer_id}
+        cursor = db.execute(query, data)
+        result = cursor.fetchone()  # This will be a tuple (ID,) or None if no match is found
+
+        return result
 
     except mysql.connector.Error as err:
         return {'error': str(err)}
 
     finally:
-        cursor.close()
-        conn.close()
+        if cursor:
+            cursor.close()
+        if db:
+            db.close()
+
+
+def create_account_query(email, password):
+  try:
+      db = DatabaseConnection()
+      query = "INSERT INTO Employer (Email, Password) VALUES (%s, %s)"
+      data = (email, password)
+
+      cursor = db.execute(query, data)
+
+      # Get the last inserted ID
+      employer_id = int(cursor.lastrowid)
+      return {'message': 'success', 'employer_id': employer_id}
+
+  except mysql.connector.Error as err:
+      return {'error': str(err)}
 
 
 def create_quiz(data):
   try:
-      conn = connect()
-      cursor = conn.cursor()
+      db = DatabaseConnection()
+
+      cursor = db.connection.cursor()
 
       employer_id = data.get('employer_id')
       quiz_title = data.get("title")
@@ -78,7 +72,7 @@ def create_quiz(data):
               cursor.execute(answer_query, (question_id, answer, is_correct))
 
       # Commit the transaction
-      conn.commit()
+      db.connection.commit()
 
       return {'message': 'success, quiz created!', 'quiz_id': quiz_id}
 
@@ -86,18 +80,20 @@ def create_quiz(data):
       return {'error': str(err)}
 
   finally:
-      cursor.close()
-      conn.close()
+      if cursor:
+          cursor.close()
+      if db:
+          db.close()
 
 
 def delete_quiz(employer_id, quiz_id):
   try:
-      conn = connect()
-      cursor = conn.cursor()
+      db = DatabaseConnection()
+      query = "DELETE FROM Quiz WHERE EmployerID = %s AND ID = %s"
+      data = (employer_id, quiz_id)
 
-      delete_query = "DELETE FROM Quiz WHERE EmployerID = %s AND ID = %s"
-      cursor.execute(delete_query, (employer_id, quiz_id))
-      conn.commit()
+      cursor = db.execute(query, data)
+      db.connection.commit()
 
       if cursor.rowcount == 0:
           return {'error': 'Quiz not found or you do not have permission to delete it'}
@@ -108,5 +104,7 @@ def delete_quiz(employer_id, quiz_id):
       return {'error': str(err)}
 
   finally:
-      cursor.close()
-      conn.close()
+      if cursor:
+          cursor.close()
+      if db:
+          db.close()
