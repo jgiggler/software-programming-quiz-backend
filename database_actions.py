@@ -1,4 +1,6 @@
 from database_connector import connect
+from random import randint
+
 
 def login_query(email, password):
   try:
@@ -105,8 +107,72 @@ def delete_quiz(employer_id, quiz_id):
       return {'message': 'success, quiz was deleted'}
 
   except mysql.connector.Error as err:
-      return {'error': str(err)}
+        return {'error': str(err)}
 
   finally:
       cursor.close()
       conn.close()
+
+def user_quiz(employer_id):
+    try:
+        # Connect to the database
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor(dictionary=True)
+        
+        # Prepare and execute SQL query
+        query = """
+        SELECT Quiz.quiz_id AS quiz_id, Quiz.title, Quiz.description
+        FROM Quiz
+        JOIN Employer ON Quiz.EmployerID = Employer.employer_id
+        WHERE employer.employer_id = %s
+        """
+        cursor.execute(query, (employer_id,))
+        
+        # Fetch all results
+        quizzes = cursor.fetchall()
+        
+        return {'quizzes': quizzes}, 200
+
+    except mysql.connector.Error as err:
+        return {'error': str(err)}, 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
+def send_quiz_link(employer_id, quiz_id, candidate_email):
+    try:
+        # Connect to the database
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor(dictionary=True)
+        
+        # Prepare and execute SQL query
+        unique_link = _generate_random_link()
+        return_link = "software-quiz.com/" + unique_link
+
+        quiz_query = "INSERT INTO Stats (candidate_email, link_id, quiz_id) VALUES (%s, %s, %s)"
+        cursor.execute(quiz_query, (candidate_email, unique_link, quiz_id))
+        
+        return {'message': "success, here is the link to the quiz",
+                "link": return_link}, 200
+
+    except mysql.connector.Error as err:
+        return {'error': str(err)}, 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
+def _generate_random_link():
+    length = 10
+    link_id = ""
+    # Choose a random number that corresponds to an alphanumeric character
+    for i in range(length):
+        rand_num = random.choice(
+            list(range(48, 58)) +  # 0-9
+            list(range(65, 91)) +  # A-Z
+            list(range(97, 123))   # a-z
+        )
+        link_id += chr(rand_num)
+        
+    return link_id
