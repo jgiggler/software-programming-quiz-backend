@@ -122,7 +122,6 @@ def send_quiz_link():
         return jsonify({'error': result['error']}), 500
 
     return jsonify(result), 200
-    return 
 
 @app.route("/quiz-results", methods=["GET", "POST"])
 def read_quiz_results():
@@ -142,6 +141,22 @@ def modify_question():
 
 @app.route("/read-question", methods=["GET", "POST"])
 def read_question():
+    return
+
+@app.route("/submit-result", methods=["GET", "POST"])
+def submit_result():
+    return 
+
+@app.route("/show-quiz", methods=["GET", "POST"])
+def show_quiz():
+    return 
+
+@app.route("/update-user", methods=["GET", "POST"])
+def update_user():
+    return 
+
+@app.route("/delete-user", methods=["GET", "POST"])
+def delete_user():
     return 
 
 # Listener

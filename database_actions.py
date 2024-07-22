@@ -1,8 +1,11 @@
 from database_connector import DatabaseConnection
 import mysql.connector
-from random import randint
+import random
 
 def login_query(email, password):
+    """
+    /login
+    """
     try:
         db = DatabaseConnection()
         query = "SELECT ID FROM Employer WHERE Email = %s AND Password = %s"
@@ -22,79 +25,87 @@ def login_query(email, password):
         if db:
             db.close()
 
-
 def create_account_query(email, password):
-  try:
-      db = DatabaseConnection()
-      query = "INSERT INTO Employer (Email, Password) VALUES (%s, %s)"
-      data = (email, password)
+    """
+    /create-account
+    """
+    try:
+        db = DatabaseConnection()
+        query = "INSERT INTO Employer (Email, Password) VALUES (%s, %s)"
+        data = (email, password)
 
-      cursor = db.execute(query, data)
+        cursor = db.execute(query, data)
 
-      # Get the last inserted ID
-      employer_id = int(cursor.lastrowid)
-      return {'message': 'success', 'employer_id': employer_id}
+        # Get the last inserted ID
+        employer_id = int(cursor.lastrowid)
+        return {'message': 'success', 'employer_id': employer_id}
 
-  except mysql.connector.Error as err:
-      return {'error': str(err)}
+    except mysql.connector.Error as err:
+        return {'error': str(err)}
 
 
 def create_quiz(data):
-  try:
-      db = DatabaseConnection()
+    """
+    /create-quiz
+    """
+    try:
+        db = DatabaseConnection()
 
-      cursor = db.connection.cursor()
+        cursor = db.connection.cursor()
 
-      employer_id = data.get('employer_id')
-      quiz_title = data.get("title")
-      quiz_description = data.get("description")
+        employer_id = data.get('employer_id')
+        quiz_title = data.get("title")
+        quiz_description = data.get("description")
 
-      # Insert into Quiz table
-      quiz_query = "INSERT INTO Quiz (EmployerID, Title, QuizDescription) VALUES (%s, %s, %s)"
-      cursor.execute(quiz_query, (employer_id, quiz_title, quiz_description))
-      quiz_id = cursor.lastrowid
+        # Insert into Quiz table
+        query = "INSERT INTO Quiz (EmployerID, Title, QuizDescription) VALUES (%s, %s, %s)"
+        data = (employer_id, quiz_title, quiz_description)
+        cursor.execute(query, data)
+        quiz_id = cursor.lastrowid
 
-      questions = data.get('questions')
-      for question in questions:
-          question_title = question.get('question_text')
-          question_type = question.get('question_type')
-          answers = question.get('answers')
-          correct_answer_index = question.get('is_correct')
+        questions = data.get('questions')
+        for question in questions:
+            question_title = question.get('question_text')
+            question_type = question.get('question_type')
+            answers = question.get('answers')
+            correct_answer_index = question.get('is_correct')
 
-          # Insert question into Questions table
-          question_query = "INSERT INTO Questions (QuizID, Question, QuestionType) VALUES (%s, %s, %s)"
-          cursor.execute(question_query, (quiz_id, question_title, question_type))
-          question_id = cursor.lastrowid
+            # Insert question into Questions table
+            question_query = "INSERT INTO Questions (QuizID, Question, QuestionType) VALUES (%s, %s, %s)"
+            cursor.execute(question_query, (quiz_id, question_title, question_type))
+            question_id = cursor.lastrowid
 
-          # Insert answers into Answers table
-          answer_query = "INSERT INTO Answers (QuestionID, Answer, is_correct) VALUES (%s, %s, %s)"
-          for index, answer in enumerate(answers):
-              is_correct = index in correct_answer_index
-              cursor.execute(answer_query, (question_id, answer, is_correct))
+            # Insert answers into Answers table
+            answer_query = "INSERT INTO Answers (QuestionID, Answer, is_correct) VALUES (%s, %s, %s)"
+            for index, answer in enumerate(answers):
+                is_correct = index in correct_answer_index
+                cursor.execute(answer_query, (question_id, answer, is_correct))
 
-      # Commit the transaction
-      db.connection.commit()
+        # Commit the transaction
+        db.connection.commit()
 
-      return {'message': 'success, quiz created!', 'quiz_id': quiz_id}
+        return {'message': 'success, quiz created!', 'quiz_id': quiz_id}
 
-  except mysql.connector.Error as err:
-      return {'error': str(err)}
+    except mysql.connector.Error as err:
+        return {'error': str(err)}
 
-  finally:
-      if cursor:
-          cursor.close()
-      if db:
-          db.close()
+    finally:
+        if cursor:
+            cursor.close()
+        if db:
+            db.close()
 
 
 def delete_quiz(employer_id, quiz_id):
+  """
+  /delete-quiz
+  """
   try:
       db = DatabaseConnection()
       query = "DELETE FROM Quiz WHERE EmployerID = %s AND ID = %s"
       data = (employer_id, quiz_id)
 
       cursor = db.execute(query, data)
-      db.connection.commit()
 
       if cursor.rowcount == 0:
           return {'error': 'Quiz not found or you do not have permission to delete it'}
@@ -111,10 +122,12 @@ def delete_quiz(employer_id, quiz_id):
           db.close()
 
 def user_quiz(employer_id):
+    """
+    /user-quiz
+    """
     try:
         # Connect to the database
-        conn = mysql.connector.connect(**db_config)
-        cursor = conn.cursor(dictionary=True)
+        db = DatabaseConnection()
         
         # Prepare and execute SQL query
         query = """
@@ -123,7 +136,8 @@ def user_quiz(employer_id):
         JOIN Employer ON Quiz.EmployerID = Employer.employer_id
         WHERE employer.employer_id = %s
         """
-        cursor.execute(query, (employer_id,))
+        data = (employer_id)
+        cursor = db.execute(query, data)
         
         # Fetch all results
         quizzes = cursor.fetchall()
@@ -134,21 +148,27 @@ def user_quiz(employer_id):
         return {'error': str(err)}, 500
 
     finally:
-        cursor.close()
-        conn.close()
+        if cursor:
+            cursor.close()
+        if db:
+            db.close()
 
 def send_quiz_link(employer_id, quiz_id, candidate_email):
+    """
+    /send-quiz
+    """
     try:
         # Connect to the database
-        conn = mysql.connector.connect(**db_config)
+        db = DatabaseConnection()
         cursor = conn.cursor(dictionary=True)
         
         # Prepare and execute SQL query
         unique_link = _generate_random_link()
         return_link = "software-quiz.com/" + unique_link
 
-        quiz_query = "INSERT INTO Stats (candidate_email, link_id, quiz_id) VALUES (%s, %s, %s)"
-        cursor.execute(quiz_query, (candidate_email, unique_link, quiz_id))
+        query = "INSERT INTO Stats (candidate_email, link_id, quiz_id) VALUES (%s, %s, %s)"
+        data = (candidate_email, unique_link, quiz_id)
+        cursor.execute(query, data)
         
         return {'message': "success, here is the link to the quiz",
                 "link": return_link}, 200
@@ -157,15 +177,42 @@ def send_quiz_link(employer_id, quiz_id, candidate_email):
         return {'error': str(err)}, 500
 
     finally:
-        cursor.close()
-        conn.close()
+        if cursor:
+            cursor.close()
+        if db:
+            db.close()
+
+def delete_user(employer_id):
+    """
+    /delete-user
+    """
+    try:
+        db = DatabaseConnection()
+        query = "INSERT INTO Employer (Email, Password) VALUES (%s, %s)"
+        data = (employer_id)
+
+        cursor = db.execute(query, data)
+
+        # Get the last inserted ID
+        return {'message': 'success, user deleted'}
+
+    except mysql.connector.Error as err:
+        return {'error': str(err)}
+  
+    finally:
+        if cursor:
+            cursor.close()
+        if db:
+            db.close()
 
 def _generate_random_link():
-    # Creates a unique 10 digit alphanumeric string
+    """
+    Creates a unique 10 digit alphanumeric string
+    """
     length = 10
     link_id = ""
 
-    for i in range(length):
+    for _ in range(length):
         rand_num = random.choice(
             list(range(48, 58)) +  # 0-9
             list(range(65, 91)) +  # A-Z
