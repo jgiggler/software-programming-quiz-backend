@@ -164,9 +164,10 @@ def send_quiz_link(employer_id, quiz_id, candidate_email):
         conn.close()
 
 def _generate_random_link():
+    # Creates a unique 10 digit alphanumeric string
     length = 10
     link_id = ""
-    # Choose a random number that corresponds to an alphanumeric character
+
     for i in range(length):
         rand_num = random.choice(
             list(range(48, 58)) +  # 0-9
