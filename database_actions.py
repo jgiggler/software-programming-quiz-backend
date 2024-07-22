@@ -1,4 +1,4 @@
-from database_connector import connect
+from database_connector import DatabaseConnection
 import mysql.connector
 from random import randint
 
