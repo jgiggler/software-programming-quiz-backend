@@ -87,12 +87,41 @@ def delete_quiz():
 
     return jsonify(result), 200
 
-@app.route("/update-quiz", methods=["GET", "POST"])
-def update_quiz():
-    return 
+@app.route("/user-quiz", methods=["POST"])
+def user_quiz():
+    data = request.json
 
-@app.route("/read-quiz", methods=["GET", "POST"])
-def read_quiz():
+    employer_id = data.get('employer_id')
+    
+    # Validate input
+    if not employer_id:
+        return jsonify({'error': 'Employer ID is required!'}), 400
+
+    result = dba.user_quiz(employer_id=employer_id)
+
+    if 'error' in result:
+        return jsonify({'error': result['error']}), 500
+
+    return jsonify(result), 200
+
+@app.route("/send-quiz", methods=["POST"])
+def send_quiz_link():
+    data = request.json
+
+    employer_id = data.get('employer_id')
+    quiz_id = data.get('quiz_id')
+    candidate_email = data.get('candidate_email')
+    
+    # Validate input
+    if not employer_id or not quiz_id or not candidate_email:
+        return jsonify({'error': 'Missing fields!'}), 400
+
+    result = dba.send_quiz_link(employer_id, quiz_id, candidate_email)
+
+    if 'error' in result:
+        return jsonify({'error': result['error']}), 500
+
+    return jsonify(result), 200
     return 
 
 @app.route("/quiz-results", methods=["GET", "POST"])
