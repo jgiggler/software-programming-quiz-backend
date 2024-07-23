@@ -24,16 +24,17 @@ def login():
         return jsonify({'error': 'Email and password are required!'}), 400
 
     result = dba.login_query(email, password)
+    print("result : ", result)
 
     # Check for database error
     if isinstance(result, dict) and 'error' in result:
         return jsonify({'error': result['error']}), 500
-  
+
     # Handle successful login
     if result:
         employer_id = result[0]  # Extract the employer ID from the tuple
         return jsonify({'message': 'success', 'employer_id': employer_id}), 200
-  
+
     # Handle invalid email or password
     return jsonify({'error': 'Invalid email or password'}), 401
 
