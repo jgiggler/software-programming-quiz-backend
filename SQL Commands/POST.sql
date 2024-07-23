@@ -56,13 +56,13 @@ VALUES ("Jack@hit.com", "as34", 1, 40);
 
 -- answers
 
-INSERT INTO quiz (ID, QuestionID, Answer, is_correct)
+INSERT INTO answers (ID, QuestionID, Answer, is_correct)
 VALUES (1, 1, "Array of Characters", 1);
 
-INSERT INTO quiz (ID, QuestionID, Answer, is_correct)
+INSERT INTO answers (ID, QuestionID, Answer, is_correct)
 VALUES (2, 1, "An integer", 0);
 
-INSERT INTO quiz (ID, QuestionID, Answer, is_correct)
+INSERT INTO answers (ID, QuestionID, Answer, is_correct)
 VALUES (3, 1, "Unicorn", 0);
 
 -- Backend Route: /delete-quiz
