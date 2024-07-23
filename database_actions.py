@@ -3,15 +3,17 @@ import mysql.connector
 from random import randint
 
 def login_query(email, password):
+    cursor = None
+    db = None
     try:
         db = DatabaseConnection()
         query = "SELECT ID FROM Employer WHERE Email = %s AND Password = %s"
         data = (email, password)
 
         cursor = db.execute(query, data)
-        result = cursor.fetchone()  # This will be a tuple (ID,) or None if no match is found
-
-        return result
+        if cursor:
+            result = cursor.fetchone()  # This will be a tuple (ID,) or None if no match is found
+            return result
 
     except mysql.connector.Error as err:
         return {'error': str(err)}
@@ -21,23 +23,26 @@ def login_query(email, password):
             cursor.close()
         if db:
             db.close()
+    return None
 
 
 def create_account_query(email, password):
-  try:
-      db = DatabaseConnection()
-      query = "INSERT INTO Employer (Email, Password) VALUES (%s, %s)"
-      data = (email, password)
+    try:
+        db = DatabaseConnection()
+        query = "INSERT INTO Employer (Email, Password) VALUES (%s, %s)"
+        data = (email, password)
+        employer_id = None
 
-      cursor = db.execute(query, data)
+        cursor = db.execute(query, data)
 
-      # Get the last inserted ID
-      employer_id = int(cursor.lastrowid)
-      return {'message': 'success', 'employer_id': employer_id}
+        # Get the last inserted ID
+        if employer_id:
+            employer_id = int(cursor.lastrowid)
+        return {'message': 'success', 'employer_id': employer_id}
 
-  except mysql.connector.Error as err:
-      return {'error': str(err)}
-
+    except mysql.connector.Error as err:
+        return {'error': str(err)}
+    
 
 def create_quiz(data):
   try:
