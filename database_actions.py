@@ -27,16 +27,24 @@ def login_query(email, password):
 
 
 def create_account_query(email, password):
+    db = None
+    cursor = None
     try:
         db = DatabaseConnection()
         query = "INSERT INTO Employer (Email, Password) VALUES (%s, %s)"
         data = (email, password)
-
+        
         cursor = db.execute(query, data)
 
-        # Get the last inserted ID
-        employer_id = int(cursor.lastrowid)
-        return {'message': 'success', 'employer_id': employer_id}
+        if cursor:
+            # Commit the transaction
+            db.connection.commit()
+
+            # Get the last inserted ID
+            employer_id = int(cursor.lastrowid)
+            return {'message': 'success', 'employer_id': employer_id}
+        else:
+            return {'error': 'Username already in use'}
 
     except mysql.connector.Error as err:
         return {'error': str(err)}

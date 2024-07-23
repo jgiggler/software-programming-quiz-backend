@@ -43,6 +43,8 @@ def login():
 def create_account():
     # Get JSON data from the POST request
     data = request.json
+    print("Received data:", data)  # Debugging
+
     email = data.get('email')
     password = data.get('password')
 
@@ -50,8 +52,11 @@ def create_account():
     if not email or not password:
         return jsonify({'error': 'Email and password are required!'}), 400
 
+    # Call the function to create account
     result = dba.create_account_query(email, password)
+    print("Query result:", result)  # Debugging
 
+    # Handle the result
     if 'error' in result:
         return jsonify({'error': result['error']}), 500
 
