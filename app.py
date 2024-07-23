@@ -130,6 +130,29 @@ def send_quiz_link():
     return jsonify(result), 200
     return 
 
+@app.route("/delete-user", methods=["DELETE"])
+def delete_user():
+    # Get JSON data from the POST request
+    data = request.json
+    print("Received data:", data)  # Debugging
+
+    employer_id = data.get('employer_id')
+
+    # Validate input
+    if not employer_id:
+        return jsonify({'error': 'Employer ID is required!'}), 400
+
+    # Call the function to delete user
+    result = dba.delete_user(employer_id)
+    print("Query result:", result)  # Debugging
+
+    # Handle the result
+    if 'error' in result:
+        return jsonify({'error': result['error']}), 500
+
+    return jsonify(result), 200
+
+
 @app.route("/quiz-results", methods=["GET", "POST"])
 def read_quiz_results():
     return 

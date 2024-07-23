@@ -44,7 +44,7 @@ def create_account_query(email, password):
             employer_id = int(cursor.lastrowid)
             return {'message': 'success', 'employer_id': employer_id}
         else:
-            return {'error': 'Username already in use'}
+            return {'message': 'Username already in use'}
 
     except mysql.connector.Error as err:
         return {'error': str(err)}
@@ -191,3 +191,31 @@ def _generate_random_link():
         link_id += chr(rand_num)
         
     return link_id
+
+def delete_user(employer_id):
+    db = None
+    cursor = None
+    try:
+        db = DatabaseConnection()
+        query = "DELETE FROM Employer WHERE ID = %s"
+        data = (employer_id,)
+        
+        cursor = db.execute(query, data)
+
+        if cursor:
+            # Commit the transaction
+            db.connection.commit()
+
+            if cursor.rowcount > 0:
+                return {'message': 'success, user deleted'}
+            else:
+                return {'message': 'User not found'}
+
+    except mysql.connector.Error as err:
+        return {'error': str(err)}
+
+    finally:
+        if cursor:
+            cursor.close()
+        if db:
+            db.close()
