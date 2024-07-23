@@ -31,17 +31,21 @@ def create_account_query(email, password):
         db = DatabaseConnection()
         query = "INSERT INTO Employer (Email, Password) VALUES (%s, %s)"
         data = (email, password)
-        employer_id = None
 
         cursor = db.execute(query, data)
 
         # Get the last inserted ID
-        if employer_id:
-            employer_id = int(cursor.lastrowid)
+        employer_id = int(cursor.lastrowid)
         return {'message': 'success', 'employer_id': employer_id}
 
     except mysql.connector.Error as err:
         return {'error': str(err)}
+
+    finally:
+        if cursor:
+            cursor.close()
+        if db:
+            db.close()
     
 
 def create_quiz(data):
