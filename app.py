@@ -125,39 +125,7 @@ def send_quiz_link():
 
 @app.route("/quiz-results", methods=["GET", "POST"])
 def read_quiz_results():
-    return 
-
-@app.route("/add-question", methods=["GET", "POST"])
-def add_question():
-    return 
-
-@app.route("/delete-question", methods=["GET", "POST"])
-def delete_question():
-    return 
-
-@app.route("/modify-question", methods=["GET", "POST"])
-def modify_question():
-    return 
-
-@app.route("/read-question", methods=["GET", "POST"])
-def read_question():
-    return
-
-@app.route("/submit-result", methods=["GET", "POST"])
-def submit_result():
-    return 
-
-@app.route("/show-quiz", methods=["GET", "POST"])
-def show_quiz():
-    return 
-
-@app.route("/update-user", methods=["GET", "POST"])
-def update_user():
-    return 
-
-@app.route("/delete-user", methods=["GET", "POST"])
-def delete_user():
-    return 
+    return  
 
 # Listener
 if __name__ == "__main__":
