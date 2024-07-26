@@ -9,26 +9,31 @@ class DatabaseConnection:
     Initializes MySQL server connection, runs SQL command, and closes server connection.
     """
     def __init__(self):
-        self.connection = mysql.connector.connect(user="osuadmin",
-                                password=os.environ.get('password'),
-                                host="software-quiz.mysql.database.azure.com",
+        self.connection = mysql.connector.connect(user=os.getenv('user'),
+                                password=os.getenv('password'),
+                                host=os.getenv('host'),
                                 port=3306, database="quiz")
-
     def execute(self, command, data):
-        if self.connection is None:
-            print("Cannot execute query: Database connection was not initialized!")
-            return
+        """
+        Run SQL command on provided data and returns cursor
+        """
         if command is None or len(command.strip()) == 0:
             print("Cannot execute query: Invalid query provided!")
             return
+        # Instantiate a MySQLCursor object: https://dev.mysql.com/doc/connector-python/en/connector-python-api-mysqlcursor-constructor.html
         cursor = self.connection.cursor()
-
-        # Insert data with SQL command
+        # Run SQL command: https://dev.mysql.com/doc/connector-python/en/connector-python-api-mysqlcursor-execute.html
         cursor.execute(command, data)
-
-        # Make sure data is committed to the database
-        self.connection.commit()
         return cursor
 
     def close(self):
+        """
+        Disconnects SQL connection: https://dev.mysql.com/doc/connector-python/en/connector-python-api-mysqlconnection-close.html
+        """
         self.connection.close()
+
+    def commit(self):
+        """
+        Make sure data is committed to the database: https://dev.mysql.com/doc/connector-python/en/connector-python-api-mysqlconnection-commit.html
+        """
+        self.connection.commit()

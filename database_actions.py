@@ -1,21 +1,25 @@
 from database_connector import DatabaseConnection
 import mysql.connector
 import random
+from dotenv import load_dotenv
+
+load_dotenv()
 
 def login_query(email, password):
     """
     /login
+    tested with valid input
     """
+    db = None
+    cursor = None
     try:
         db = DatabaseConnection()
         query = "SELECT ID FROM Employer WHERE Email = %s AND Password = %s"
         data = (email, password)
-
         cursor = db.execute(query, data)
-        result = cursor.fetchone()  # This will be a tuple (ID,) or None if no match is found
-
-        return result
-
+        employer_id = cursor.fetchone()[0]
+        return employer_id
+    
     except mysql.connector.Error as err:
         return {'error': str(err)}
 
@@ -28,62 +32,45 @@ def login_query(email, password):
 def create_account_query(email, password):
     """
     /create-account
+    tested with valid input
     """
+    db = None
+    cursor = None
     try:
         db = DatabaseConnection()
         query = "INSERT INTO Employer (Email, Password) VALUES (%s, %s)"
         data = (email, password)
 
         cursor = db.execute(query, data)
-
-        # Get the last inserted ID
+        db.commit()
+        # Returns the value generated for an AUTO_INCREMENT column by the previous INSERT or UPDATE statement or None when there is no such value: https://dev.mysql.com/doc/connector-python/en/connector-python-api-mysqlcursor-lastrowid.html
         employer_id = int(cursor.lastrowid)
         return {'message': 'success', 'employer_id': employer_id}
 
     except mysql.connector.Error as err:
         return {'error': str(err)}
+    
+    finally:
+        if cursor:
+            cursor.close()
+        if db:
+            db.close()
 
-
-def create_quiz(data):
+def create_quiz_query(employer_id, quiz_title, quiz_description):
     """
     /create-quiz
+    tested with valid input
     """
+    db = None
+    cursor = None
     try:
         db = DatabaseConnection()
-
-        cursor = db.connection.cursor()
-
-        employer_id = data.get('employer_id')
-        quiz_title = data.get("title")
-        quiz_description = data.get("description")
-
         # Insert into Quiz table
         query = "INSERT INTO Quiz (EmployerID, Title, QuizDescription) VALUES (%s, %s, %s)"
         data = (employer_id, quiz_title, quiz_description)
-        cursor.execute(query, data)
-        quiz_id = cursor.lastrowid
-
-        questions = data.get('questions')
-        for question in questions:
-            question_title = question.get('question_text')
-            question_type = question.get('question_type')
-            answers = question.get('answers')
-            correct_answer_index = question.get('is_correct')
-
-            # Insert question into Questions table
-            question_query = "INSERT INTO Questions (QuizID, Question, QuestionType) VALUES (%s, %s, %s)"
-            cursor.execute(question_query, (quiz_id, question_title, question_type))
-            question_id = cursor.lastrowid
-
-            # Insert answers into Answers table
-            answer_query = "INSERT INTO Answers (QuestionID, Answer, is_correct) VALUES (%s, %s, %s)"
-            for index, answer in enumerate(answers):
-                is_correct = index in correct_answer_index
-                cursor.execute(answer_query, (question_id, answer, is_correct))
-
-        # Commit the transaction
-        db.connection.commit()
-
+        cursor = db.execute(query, data)
+        db.commit()
+        quiz_id = int(cursor.lastrowid)
         return {'message': 'success, quiz created!', 'quiz_id': quiz_id}
 
     except mysql.connector.Error as err:
@@ -95,53 +82,76 @@ def create_quiz(data):
         if db:
             db.close()
 
+def create_question_query(QuizID, Question, QuestionType):
+    """
+    /create-quiz
+    TODO
+    question_query = "INSERT INTO Questions (QuizID, Question, QuestionType) VALUES (%s, %s, %s)"
+    cursor.execute(question_query, (quiz_id, question_title, question_type))
+    question_id = cursor.lastrowid
+    """
+    return
 
-def delete_quiz(employer_id, quiz_id):
-  """
-  /delete-quiz
-  """
-  try:
-      db = DatabaseConnection()
-      query = "DELETE FROM Quiz WHERE EmployerID = %s AND ID = %s"
-      data = (employer_id, quiz_id)
+def create_answer_query(QuestionID, Answer, is_correct):
+    """
+    /create-quiz
+    answer_query = "INSERT INTO Answers (QuestionID, Answer, is_correct) VALUES (%s, %s, %s)"
+    for index, answer in enumerate(answers):
+        is_correct = index in correct_answer_index
+        cursor.execute(answer_query, (question_id, answer, is_correct))
+    TODO
+    """
+    return
 
-      cursor = db.execute(query, data)
+def delete_quiz_query(employer_id, quiz_id):
+    """
+    /delete-quiz
+    tested with valid input
+    """
+    db = None
+    cursor = None
+    try:
+        db = DatabaseConnection()
+        query = "DELETE FROM Quiz WHERE EmployerID = %s AND ID = %s"
+        data = (employer_id, quiz_id)
 
-      if cursor.rowcount == 0:
-          return {'error': 'Quiz not found or you do not have permission to delete it'}
+        cursor = db.execute(query, data)
+        db.commit()
 
-      return {'message': 'success, quiz was deleted'}
+        if cursor.rowcount is None:
+            return {'error': 'Quiz not found or you do not have permission to delete it'}
 
-  except mysql.connector.Error as err:
-        return {'error': str(err)}
+        return {'message': 'success, quiz was deleted'}
 
-  finally:
-      if cursor:
-          cursor.close()
-      if db:
-          db.close()
+    except mysql.connector.Error as err:
+            return {'error': str(err)}
 
-def user_quiz(employer_id):
+    finally:
+        if cursor:
+            cursor.close()
+        if db:
+            db.close()
+
+def user_quiz_query(employer_id):
     """
     /user-quiz
+    tested with valid input (querying multiple quizzes from one employer in quiz table)
     """
+    db = None
+    cursor = None
     try:
         # Connect to the database
         db = DatabaseConnection()
         
         # Prepare and execute SQL query
         query = """
-        SELECT Quiz.quiz_id AS quiz_id, Quiz.title, Quiz.description
-        FROM Quiz
-        JOIN Employer ON Quiz.EmployerID = Employer.employer_id
-        WHERE employer.employer_id = %s
+        SELECT * FROM quiz WHERE EmployerID = %s
         """
-        data = (employer_id)
+        data = (employer_id,)
         cursor = db.execute(query, data)
-        
+
         # Fetch all results
         quizzes = cursor.fetchall()
-        
         return {'quizzes': quizzes}, 200
 
     except mysql.connector.Error as err:
@@ -153,23 +163,26 @@ def user_quiz(employer_id):
         if db:
             db.close()
 
-def send_quiz_link(employer_id, quiz_id, candidate_email):
+def send_quiz_link(candidate_email, quiz_id, grade):
     """
     /send-quiz
+    tested with valid input
     """
+    db = None
+    cursor = None
     try:
         # Connect to the database
         db = DatabaseConnection()
-        cursor = conn.cursor(dictionary=True)
         
         # Prepare and execute SQL query
         unique_link = _generate_random_link()
         return_link = "software-quiz.com/" + unique_link
 
-        query = "INSERT INTO Stats (candidate_email, link_id, quiz_id) VALUES (%s, %s, %s)"
-        data = (candidate_email, unique_link, quiz_id)
-        cursor.execute(query, data)
-        
+        query = "INSERT INTO Stats (candidate_email, Link_ID, Quiz_ID, grade) VALUES (%s, %s, %s, %s)"
+        data = (candidate_email, return_link, quiz_id, grade)
+        db.execute(query, data)
+        db.commit()
+
         return {'message': "success, here is the link to the quiz",
                 "link": return_link}, 200
 
@@ -185,25 +198,28 @@ def send_quiz_link(employer_id, quiz_id, candidate_email):
 def delete_user(employer_id):
     """
     /delete-user
+    tested with valid input
     """
     try:
         db = DatabaseConnection()
-        query = "INSERT INTO Employer (Email, Password) VALUES (%s, %s)"
-        data = (employer_id)
+        query = "DELETE FROM employer WHERE ID = %s"
+        data = (employer_id,)
 
         cursor = db.execute(query, data)
 
         # Get the last inserted ID
         return {'message': 'success, user deleted'}
 
+
     except mysql.connector.Error as err:
-        return {'error': str(err)}
-  
+        return {'error': str(err)}, 500
+    
     finally:
         if cursor:
             cursor.close()
         if db:
             db.close()
+
 
 def _generate_random_link():
     """
@@ -221,3 +237,5 @@ def _generate_random_link():
         link_id += chr(rand_num)
         
     return link_id
+
+print(send_quiz_link("g@gmail.com", 4, 87.2))
