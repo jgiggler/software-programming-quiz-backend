@@ -122,12 +122,10 @@ def send_quiz_link():
         return jsonify({'error': result['error']}), 500
 
     return jsonify(result), 200
-    return 
 
 @app.route("/quiz-results", methods=["GET", "POST"])
 def read_quiz_results():
     return  
-
 
 # Listener
 if __name__ == "__main__":

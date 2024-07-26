@@ -28,6 +28,9 @@ SELECT LAST_INSERT_ID();
 
 -- /update-quiz
 
+UPDATE quiz
+SET ContactName = 'Alfred Schmidt', City = 'Frankfurt'
+WHERE CustomerID = 1;
 
 -- /add-question
 
@@ -53,13 +56,13 @@ VALUES ("Jack@hit.com", "as34", 1, 40);
 
 -- answers
 
-INSERT INTO quiz (ID, QuestionID, Answer, is_correct)
+INSERT INTO answers (ID, QuestionID, Answer, is_correct)
 VALUES (1, 1, "Array of Characters", 1);
 
-INSERT INTO quiz (ID, QuestionID, Answer, is_correct)
+INSERT INTO answers (ID, QuestionID, Answer, is_correct)
 VALUES (2, 1, "An integer", 0);
 
-INSERT INTO quiz (ID, QuestionID, Answer, is_correct)
+INSERT INTO answers (ID, QuestionID, Answer, is_correct)
 VALUES (3, 1, "Unicorn", 0);
 
 -- Backend Route: /delete-quiz
@@ -71,6 +74,8 @@ VALUES (3, 1, "Unicorn", 0);
 -- Backend Route: /send-quiz
 -- Frontend: POST{ employer_id: “4103”, quiz_id: 43, candidate_email: “abc@gmail.com” }
 -- Backend:{ message: “success, here is link to quiz”, link: “software-quiz.com/abc23” }
+
+
 
 -- Backend Route: /send-result
 -- Frontend: POST{ employer_id: “4103”, quiz_id: 43, link: “abc23”, question_id: [1, 4, 5, 10, 25, 34], is_correct: [0, 1, 1, 1, 0, 1] }
