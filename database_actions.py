@@ -220,7 +220,6 @@ def delete_user(employer_id):
         if db:
             db.close()
 
-
 def _generate_random_link():
     """
     Creates a unique 10 digit alphanumeric string
@@ -237,5 +236,3 @@ def _generate_random_link():
         link_id += chr(rand_num)
         
     return link_id
-
-print(send_quiz_link("g@gmail.com", 4, 87.2))
