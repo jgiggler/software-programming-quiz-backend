@@ -226,6 +226,47 @@ def quiz_results_query(employer_id, quiz_id):
         if db:
             db.close()
 
+def submit_quiz_query(quiz_id, candidate_email, quiz_data):
+    """
+    /submit-quiz
+    Handles the quiz answers and UPDATES the grade into Stats table
+    """
+    db = None
+    cursor = None
+
+    try:
+        db = DatabaseConnection()
+        question_ids = list(quiz_data.keys())
+        correct_answers = _get_correct_answers(db, question_ids=question_ids)
+        correct_answers_dict = {item['question_id']: item['answer_text'] for item in correct_answers}
+
+        total_questions = len(quiz_data)
+        correct_count = sum(1 for qid, ans in quiz_data.items() if correct_answers_dict.get(qid) == ans)
+
+        grade = correct_count / total_questions
+
+        query = "UPDATE Stats SET grade = %s WHERE candidate_email = %s"
+        data = (grade, candidate_email,)
+        db.execute(query, data)
+        db.commit()
+
+        return {'message': "success, quiz completed and submitted by candidate"}, 200
+
+    except mysql.connector.Error as err:
+        return {'error': str(err)}, 500
+    
+    finally:
+        if cursor:
+            cursor.close()
+        if db:
+            db.close()
+    
+def _get_correct_answers(db, question_ids):
+    # Prepare and execute SQL query to get the correct answers for the given question IDs
+    format_strings = ','.join(['%s'] * len(question_ids))
+    db.execute(f"SELECT question_id, answer_text FROM Answers WHERE question_id IN ({format_strings}) AND is_correct = TRUE", tuple(question_ids))
+    return db.fetchall()
+
 def delete_user(employer_id):
     """
     /delete-user

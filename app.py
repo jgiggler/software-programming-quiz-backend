@@ -168,9 +168,9 @@ def read_quiz_results():
 @app.route("/update-user", methods=["POST"])
 def update_user():
     data = request.json
-    quiz_id = data.get('quiz_id')
-    candidate_id = data.get('candidate_email')
-    quiz_data = data.get('password')
+    employer_id = data.get('employer_id')
+    email = data.get('email')
+    password = data.get('password')
     print(employer_id, email, password)
 
     # Validate input
@@ -189,17 +189,16 @@ def update_user():
 @app.route("/submit-quiz", methods=["POST"])
 def submit_quiz():
     data = request.json
-    employer_id = data.get('employer_id')
-    email = data.get('email')
-    password = data.get('password')
-    print(employer_id, email, password)
+    quiz_id = data.get('quiz_id')
+    candidate_email = data.get('candidate_email')
+    quiz_data = data.get('quiz_data')
 
     # Validate input
-    if not employer_id:
-        return jsonify({'message': 'Employer ID is required!'}), 400
+    if not quiz_id or candidate_email or quiz_data:
+        return jsonify({'message': 'quiz_id, candidate_email, or quiz_data is required!'}), 400
 
     # Call the function to update user
-    result = dba.update_user(employer_id, email, password)
+    result = dba.submit_quiz_query(quiz_id, candidate_email, quiz_data)
 
     # Handle the result
     if 'error' in result:
@@ -211,6 +210,7 @@ def submit_quiz():
 
 @app.route("/show-quiz", methods=["POST"])
 def submit_quiz():
+    
     return
 
 
