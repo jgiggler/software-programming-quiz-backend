@@ -1,6 +1,7 @@
 from database_connector import DatabaseConnection
 import mysql.connector
 import random
+from flask import jsonify
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -61,7 +62,7 @@ def create_account_query(email, password):
         if db:
             db.close()
 
-def create_quiz_query(employer_id, quiz_title, quiz_description):
+def create_quiz_query(employer_id, quiz_title, quiz_description, timer):
     """
     /create-quiz
     tested with valid input
@@ -71,8 +72,8 @@ def create_quiz_query(employer_id, quiz_title, quiz_description):
     try:
         db = DatabaseConnection()
         # Insert into Quiz table
-        query = "INSERT INTO Quiz (EmployerID, Title, QuizDescription) VALUES (%s, %s, %s)"
-        data = (employer_id, quiz_title, quiz_description)
+        query = "INSERT INTO Quiz (employer_id, title, description, timer) VALUES (%s, %s, %s, %i)"
+        data = (employer_id, quiz_title, quiz_description, timer,)
         cursor = db.execute(query, data)
         db.commit()
         quiz_id = int(cursor.lastrowid)
@@ -199,6 +200,135 @@ def send_quiz_link(candidate_email, quiz_id, grade):
             cursor.close()
         if db:
             db.close()
+
+def quiz_results_query(employer_id, quiz_id):
+    """
+    /quiz-results
+    Shows the results from the quiz_id
+    """
+    db = None
+    cursor = None
+    try:
+        db = DatabaseConnection()
+        query = "SELECT candidate_email, grade FROM stats WHERE quiz_id = %s"
+        data = (quiz_id,)
+
+        cursor = db.execute(query, data)
+
+
+        return {'message': 'success'}
+
+    except mysql.connector.Error as err:
+        return {'error': str(err)}, 500
+    
+    finally:
+        if cursor:
+            cursor.close()
+        if db:
+            db.close()
+
+def submit_quiz_query(quiz_id, candidate_email, quiz_data):
+    """
+    /submit-quiz
+    Handles the quiz answers and UPDATES the grade into Stats table
+    """
+    db = None
+    cursor = None
+
+    try:
+        db = DatabaseConnection()
+        question_ids = list(quiz_data.keys())
+        correct_answers = _get_correct_answers(db, question_ids=question_ids)
+        correct_answers_dict = {item['question_id']: item['answer_text'] for item in correct_answers}
+
+        total_questions = len(quiz_data)
+        correct_count = sum(1 for qid, ans in quiz_data.items() if correct_answers_dict.get(qid) == ans)
+
+        grade = correct_count / total_questions
+
+        query = "UPDATE Stats SET grade = %s WHERE candidate_email = %s"
+        data = (grade, candidate_email,)
+        db.execute(query, data)
+        db.commit()
+
+        return {'message': "success, quiz completed and submitted by candidate"}, 200
+
+    except mysql.connector.Error as err:
+        return {'error': str(err)}, 500
+    
+    finally:
+        if cursor:
+            cursor.close()
+        if db:
+            db.close()
+    
+def _get_correct_answers(db, question_ids):
+    # Prepare and execute SQL query to get the correct answers for the given question IDs
+    format_strings = ','.join(['%s'] * len(question_ids))
+    db.execute(f"SELECT question_id, answer_text FROM Answers WHERE question_id IN ({format_strings}) AND is_correct = TRUE", tuple(question_ids))
+    return db.fetchall()
+
+def show_quiz_query(quiz_id):
+    """
+    /show-quiz
+    Shows all the questions and answers from a given quiz_id
+    """
+    try:
+        db = DatabaseConnection()
+    
+        # Get quiz details
+        quiz_details = _get_quiz_details(db, quiz_id)
+        if not quiz_details:
+            return jsonify({'error': 'Quiz not found!'}), 404
+    
+        # Get quiz questions
+        quiz_questions = _get_quiz_questions(db, quiz_id)
+        
+        # Structure the response data
+        questions = []
+        for question in quiz_questions:
+            question_id = question['question_id']
+            question_text = question['question_text']
+            question_type = question['question_type']
+            
+            # Get answers for each question
+            answers_data = _get_question_answers(db, question_id)
+            answers = [answer['answer_text'] for answer in answers_data]
+            
+            questions.append({
+                'answers': answers,
+                'question_text': question_text,
+                'question_type': question_type
+            })
+    
+        response_data = {
+            'quiz_id': quiz_details['quiz_id'],
+            'title': quiz_details['title'],
+            'description': quiz_details['description'],
+            'timer': quiz_details['timer'],
+            'questions': questions
+        }
+    
+        return jsonify(response_data), 200
+
+    except mysql.connector.Error as err:
+        return jsonify({'error': str(err)}), 500
+
+    finally:
+        if db:
+            db.close()
+
+def _get_quiz_details(db, quiz_id):
+    db.execute("SELECT * FROM Quiz WHERE quiz_id = %s", (quiz_id,))
+    return db.fetchone()
+
+def _get_quiz_questions(db, quiz_id):
+    db.execute("SELECT * FROM Questions WHERE quiz_id = %s", (quiz_id,))
+    return db.fetchall()
+
+def _get_question_answers(db, question_id):
+    db.execute("SELECT answer_text FROM Answers WHERE question_id = %s", (question_id,))
+    return db.fetchall()
 
 def delete_user(employer_id):
     """

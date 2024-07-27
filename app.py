@@ -64,7 +64,7 @@ def create_quiz():
     data = request.json
 
     # Run query and retrieve the result 
-    result = dba.create_quiz(data)
+    result = dba.create_quiz_query(data)
 
     if 'error' in result:
         return jsonify({'error': result['error']}), 500
@@ -81,7 +81,7 @@ def delete_quiz():
     if not employer_id or not quiz_id:
         return jsonify({'error': 'Employer ID and Quiz ID are required!'}), 400
 
-    result = dba.delete_quiz(employer_id, quiz_id)
+    result = dba.delete_quiz_query(employer_id, quiz_id)
 
     if 'error' in result:
         return jsonify({'error': result['error']}), 500
@@ -98,14 +98,14 @@ def user_quiz():
     if not employer_id:
         return jsonify({'error': 'Employer ID is required!'}), 400
 
-    result = dba.user_quiz(employer_id=employer_id)
+    result = dba.user_quiz_query(employer_id=employer_id)
 
     if 'error' in result:
         return jsonify({'error': result['error']}), 500
 
     return jsonify(result), 200
 
-@app.route("/send-quiz", methods=["POST"])
+@app.route("/send-quiz-link", methods=["POST"])
 def send_quiz_link():
     data = request.json
 
@@ -146,6 +146,22 @@ def delete_user():
 
 @app.route("/quiz-results", methods=["GET", "POST"])
 def read_quiz_results():
+    data = request.json
+    employer_id = data.get('employer_id')
+    quiz_id = data.get('quiz_id')
+
+    # Validate input
+    if not employer_id or not quiz_id:
+        return jsonify({'message': 'Missing employer id or quiz id!'}), 400
+
+    # Call the function to delete user
+    result = dba.quiz_results_query(employer_id, quiz_id)
+
+    # Handle the result
+    if 'error' in result:
+        return jsonify({'message': result['error']}), 500
+
+    return jsonify(result), 200 
     return  
 
 
@@ -163,6 +179,46 @@ def update_user():
 
     # Call the function to update user
     result = dba.update_user(employer_id, email, password)
+
+    # Handle the result
+    if 'error' in result:
+        return jsonify({'message': result['error']}), 400
+
+    return jsonify(result), 200
+
+@app.route("/submit-quiz", methods=["POST"])
+def submit_quiz():
+    data = request.json
+    quiz_id = data.get('quiz_id')
+    candidate_email = data.get('candidate_email')
+    quiz_data = data.get('quiz_data')
+
+    # Validate input
+    if not quiz_id or candidate_email or quiz_data:
+        return jsonify({'message': 'quiz_id, candidate_email, or quiz_data is required!'}), 400
+
+    # Call the function to update user
+    result = dba.submit_quiz_query(quiz_id, candidate_email, quiz_data)
+
+    # Handle the result
+    if 'error' in result:
+        return jsonify({'message': result['error']}), 400
+
+    return jsonify(result), 200
+    return
+
+
+@app.route("/show-quiz", methods=["POST"])
+def show_quiz_query():
+    data = request.json
+    quiz_id = data.get('quiz_id')
+
+    # Validate input
+    if not quiz_id:
+        return jsonify({'message': 'quiz_id is required!'}), 400
+
+    # Call the function to update user
+    result = dba.show_quiz_query(quiz_id)
 
     # Handle the result
     if 'error' in result:
