@@ -17,7 +17,12 @@ def login_query(email, password):
         query = "SELECT ID FROM Employer WHERE Email = %s AND Password = %s"
         data = (email, password)
         cursor = db.execute(query, data)
-        employer_id = cursor.fetchone()[0]
+        result = cursor.fetchone()
+        
+        if result is None:
+            return None
+        
+        employer_id = result[0]
         return employer_id
     
     except mysql.connector.Error as err:
@@ -236,3 +241,104 @@ def _generate_random_link():
         link_id += chr(rand_num)
         
     return link_id
+
+def delete_user(employer_id):
+    db = None
+    cursor = None
+    try:
+        db = DatabaseConnection()
+        query = "DELETE FROM Employer WHERE ID = %s"
+        data = (employer_id,)
+        
+        cursor = db.execute(query, data)
+
+        if cursor:
+            # Commit the transaction
+            db.connection.commit()
+
+            if cursor.rowcount > 0:
+                return {'message': 'success, user deleted'}
+            else:
+                return {'message': 'User not found'}
+
+    except mysql.connector.Error as err:
+        return {'error': str(err)}
+
+    finally:
+        if cursor:
+            cursor.close()
+        if db:
+            db.close()
+
+def update_user(employer_id, email=None, password=None):
+    """
+    /update-user
+
+    Update user's email or password based on provided employer_id.
+    Fails if the new email already exists or if no update parameters are provided.
+    """
+    db = None
+    cursor = None
+    try:
+        if email is None and password is None:
+            return {'error': 'No update parameters provided'}
+
+        db = DatabaseConnection()
+
+        # Retrieve current email and password
+        query = "SELECT Email, Password FROM Employer WHERE ID = %s"
+        cursor = db.execute(query, (employer_id,))
+        current_email, current_password = cursor.fetchone()
+
+        # Check if the new email is the same as the current email
+        if email and email == current_email:
+            return {'error': 'The new email must be different from the current email'}
+
+        # Check if the new email is already taken by another user
+        if email:
+            query = "SELECT ID FROM Employer WHERE Email = %s"
+            cursor = db.execute(query, (email,))
+            result = cursor.fetchone()
+            if result and result[0] != employer_id:
+                return {'error': 'Email already exists'}
+
+        # Check if the new password is the same as the current password
+        if password and password == current_password:
+            return {'error': 'The new password must be different from the current password'}
+
+        # Construct dynamic query
+        fields_to_update = []
+        data = []
+
+        if email:
+            fields_to_update.append("Email = %s")
+            data.append(email)
+
+        if password:
+            fields_to_update.append("Password = %s")
+            data.append(password)
+
+        update_clause = ", ".join(fields_to_update)
+        query = f"UPDATE Employer SET {update_clause} WHERE ID = %s"
+        data.append(employer_id)
+
+        cursor = db.execute(query, data)
+        db.commit()
+
+        if email and password:
+            return {'message': 'Success, email and password updated'}
+        
+        elif email:
+            return {'message': 'Success, email updated'}
+        
+        elif password:
+            return {'message': 'Success, password updated'}
+
+    except mysql.connector.Error as err:
+        return {'message': str(err)}
+
+    finally:
+        if cursor:
+            cursor.close()
+        if db:
+            db.close()
