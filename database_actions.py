@@ -200,6 +200,32 @@ def send_quiz_link(candidate_email, quiz_id, grade):
         if db:
             db.close()
 
+def quiz_results_query(employer_id, quiz_id):
+    """
+    /quiz-results
+    Shows the results from the quiz_id
+    """
+    db = None
+    cursor = None
+    try:
+        db = DatabaseConnection()
+        query = "SELECT candidate_email, grade FROM stats WHERE quiz_id = %s"
+        data = (quiz_id,)
+
+        cursor = db.execute(query, data)
+
+
+        return {'message': 'success'}
+
+    except mysql.connector.Error as err:
+        return {'error': str(err)}, 500
+    
+    finally:
+        if cursor:
+            cursor.close()
+        if db:
+            db.close()
+
 def delete_user(employer_id):
     """
     /delete-user
