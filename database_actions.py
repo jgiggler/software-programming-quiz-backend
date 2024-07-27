@@ -325,7 +325,14 @@ def update_user(employer_id, email=None, password=None):
         cursor = db.execute(query, data)
         db.commit()
 
-        return {'message': 'success, user updated'}
+        if email and password:
+            return {'message': 'Success, email and password updated'}
+        
+        elif email:
+            return {'message': 'Success, email updated'}
+        
+        elif password:
+            return {'message': 'Success, password updated'}
 
     except mysql.connector.Error as err:
         return {'message': str(err)}
