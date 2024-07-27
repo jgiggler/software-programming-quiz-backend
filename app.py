@@ -154,8 +154,9 @@ def read_quiz_results():
 def update_user():
     data = request.json
     employer_id = data.get('employer_id')
-    email = data.get('email', None)
-    password = data.get('password', None)
+    email = data.get('email')
+    password = data.get('password')
+    print(employer_id, email, password)
 
     # Validate input
     if not employer_id:
