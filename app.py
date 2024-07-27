@@ -209,9 +209,22 @@ def submit_quiz():
 
 
 @app.route("/show-quiz", methods=["POST"])
-def submit_quiz():
-    
-    return
+def show_quiz_query():
+    data = request.json
+    quiz_id = data.get('quiz_id')
+
+    # Validate input
+    if not quiz_id:
+        return jsonify({'message': 'quiz_id is required!'}), 400
+
+    # Call the function to update user
+    result = dba.show_quiz_query(quiz_id)
+
+    # Handle the result
+    if 'error' in result:
+        return jsonify({'message': result['error']}), 400
+
+    return jsonify(result), 200
 
 
 # Listener
