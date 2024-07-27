@@ -10,7 +10,6 @@ app = Flask(__name__)
 CORS(app)
 
 # Routes 
-# Mostly just placeholders based on the specs until the database communication is implemented
 
 @app.route("/login", methods=["POST"])
 def login():
@@ -21,38 +20,40 @@ def login():
 
     # Validate input
     if not email or not password:
-        return jsonify({'error': 'Email and password are required!'}), 400
+        return jsonify({'message': 'Email and password are required!'}), 400
 
     result = dba.login_query(email, password)
 
     # Check for database error
     if isinstance(result, dict) and 'error' in result:
-        return jsonify({'error': result['error']}), 500
-  
+        return jsonify({'message': result['error']}), 500
+    
     # Handle successful login
     if result:
-        employer_id = result[0]  # Extract the employer ID from the tuple
-        return jsonify({'message': 'success', 'employer_id': employer_id}), 200
-  
+        return jsonify({'message': 'success', 'employer_id': result}), 200
+
     # Handle invalid email or password
-    return jsonify({'error': 'Invalid email or password'}), 401
+    return jsonify({'message': 'Invalid email or password'}), 401
 
 
 @app.route("/create-account", methods=["POST"])
 def create_account():
     # Get JSON data from the POST request
     data = request.json
+
     email = data.get('email')
     password = data.get('password')
 
     # Validate input
     if not email or not password:
-        return jsonify({'error': 'Email and password are required!'}), 400
+        return jsonify({'message': 'Email and password are required!'}), 400
 
+    # Call the function to create account
     result = dba.create_account_query(email, password)
 
+    # Handle the result
     if 'error' in result:
-        return jsonify({'error': result['error']}), 500
+        return jsonify({'message': 'account already exists for that email'}), 500
 
     return jsonify(result), 201
 
@@ -123,9 +124,52 @@ def send_quiz_link():
 
     return jsonify(result), 200
 
+@app.route("/delete-user", methods=["DELETE"])
+def delete_user():
+    # Get JSON data from the POST request
+    data = request.json
+    employer_id = data.get('employer_id')
+
+    # Validate input
+    if not employer_id:
+        return jsonify({'message': 'Employer ID is required!'}), 400
+
+    # Call the function to delete user
+    result = dba.delete_user(employer_id)
+
+    # Handle the result
+    if 'error' in result:
+        return jsonify({'message': result['error']}), 500
+
+    return jsonify(result), 200
+
+
 @app.route("/quiz-results", methods=["GET", "POST"])
 def read_quiz_results():
     return  
+
+
+@app.route("/update-user", methods=["POST"])
+def update_user():
+    data = request.json
+    employer_id = data.get('employer_id')
+    email = data.get('email')
+    password = data.get('password')
+    print(employer_id, email, password)
+
+    # Validate input
+    if not employer_id:
+        return jsonify({'message': 'Employer ID is required!'}), 400
+
+    # Call the function to update user
+    result = dba.update_user(employer_id, email, password)
+
+    # Handle the result
+    if 'error' in result:
+        return jsonify({'message': result['error']}), 400
+
+    return jsonify(result), 200
+
 
 # Listener
 if __name__ == "__main__":
