@@ -158,7 +158,7 @@ def user_quiz_query(employer_id):
 
         # Fetch all results
         quizzes = cursor.fetchall()
-        return {'quizzes': quizzes}, 200
+        return {'quizzes': quizzes}
 
     except mysql.connector.Error as err:
         return {'error': str(err)}, 500

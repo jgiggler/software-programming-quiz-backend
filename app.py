@@ -91,19 +91,18 @@ def delete_quiz():
 @app.route("/user-quiz", methods=["POST"])
 def user_quiz():
     data = request.json
-
     employer_id = data.get('employer_id')
-    
+    print(employer_id)
     # Validate input
     if not employer_id:
         return jsonify({'error': 'Employer ID is required!'}), 400
 
-    result = dba.user_quiz_query(employer_id=employer_id)
+    result = dba.user_quiz_query(employer_id)
 
     if 'error' in result:
         return jsonify({'error': result['error']}), 500
 
-    return jsonify(result), 200
+    return jsonify(result)
 
 @app.route("/send-quiz-link", methods=["POST"])
 def send_quiz_link():
