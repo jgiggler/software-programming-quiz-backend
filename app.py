@@ -158,7 +158,7 @@ def delete_user():
     return jsonify(result), 200
 
 
-@app.route("/quiz-results", methods=["GET", "POST"])
+@app.route("/quiz-results", methods=["GET"])
 def read_quiz_results():
     data = request.json
     employer_id = data.get('employer_id')
@@ -175,7 +175,7 @@ def read_quiz_results():
     if 'error' in result:
         return jsonify({'message': result['error']}), 500
 
-    return jsonify(result), 200 
+    return jsonify(result)
 
 
 @app.route("/update-user", methods=["POST"])
