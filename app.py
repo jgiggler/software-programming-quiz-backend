@@ -62,14 +62,29 @@ def create_account():
 def create_quiz():
     # Get JSON data from the POST request
     data = request.json
+    employer_id = data.get('employer_id')
+    quiz_title = data.get('title')
+    quiz_description = data.get('description')
+    timer = data.get('timer')
 
-    # Run query and retrieve the result 
-    result = dba.create_quiz_query(data)
+    quiz_data = data.get('0')
+    Question = quiz_data.get('question')
+    QuestionType = quiz_data.get('type')
+    Answer = quiz_data.get('answers')
+    is_correct = quiz_data.get('correctAnswers')
 
-    if 'error' in result:
-        return jsonify({'error': result['error']}), 500
+    # Run query and retrieve the result
+    QuizID = dba.create_quiz_query(employer_id, quiz_title, quiz_description, timer)
+    if 'error' in QuizID:
+        return jsonify({'error': QuizID['error']}), 500
+    QuestionID = dba.create_question_query(QuizID, Question, QuestionType)
+    if 'error' in QuestionID:
+        return jsonify({'error': QuestionID['error']}), 500
+    AnswerID = dba.create_answer_query(QuestionID, Answer, is_correct)
+    if 'error' in AnswerID:
+        return jsonify({'error': AnswerID['error']}), 500
 
-    return jsonify(result), 201
+    return jsonify(QuizID), 201
 
 
 @app.route("/delete-quiz", methods=["POST"])
@@ -161,7 +176,6 @@ def read_quiz_results():
         return jsonify({'message': result['error']}), 500
 
     return jsonify(result), 200 
-    return  
 
 
 @app.route("/update-user", methods=["POST"])

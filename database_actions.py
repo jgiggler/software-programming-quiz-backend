@@ -92,22 +92,60 @@ def create_question_query(QuizID, Question, QuestionType):
     """
     /create-quiz
     TODO
-    question_query = "INSERT INTO Questions (QuizID, Question, QuestionType) VALUES (%s, %s, %s)"
-    cursor.execute(question_query, (quiz_id, question_title, question_type))
-    question_id = cursor.lastrowid
     """
-    return
+    db = None
+    cursor = None
+    try:
+        db = DatabaseConnection()
+        query = "INSERT INTO Questions (QuizID, Question, QuestionType) VALUES (%s, %s, %s)"
+        data = (QuizID, Question, QuestionType)
+
+        cursor = db.execute(query, data)
+        db.commit()
+
+        if cursor.rowcount is None:
+            return {'error': 'Quiz not found or you do not have permission to delete it'}
+
+        return {'message': 'success, quiz was deleted'}
+
+    except mysql.connector.Error as err:
+            return {'error': str(err)}
+
+    finally:
+        if cursor:
+            cursor.close()
+        if db:
+            db.close()
 
 def create_answer_query(QuestionID, Answer, is_correct):
     """
     /create-quiz
-    answer_query = "INSERT INTO Answers (QuestionID, Answer, is_correct) VALUES (%s, %s, %s)"
-    for index, answer in enumerate(answers):
-        is_correct = index in correct_answer_index
-        cursor.execute(answer_query, (question_id, answer, is_correct))
     TODO
     """
-    return
+    db = None
+    cursor = None
+    try:
+        db = DatabaseConnection()
+        query = "INSERT INTO Answers (QuestionID, Answer, is_correct) VALUES (%s, %s, %s)"
+        data = (QuestionID, Answer, is_correct)
+
+        cursor = db.execute(query, data)
+        db.commit()
+
+        if cursor.rowcount is None:
+            return {'error': 'Quiz not found or you do not have permission to delete it'}
+
+        return {'message': 'success, quiz was deleted'}
+
+    except mysql.connector.Error as err:
+            return {'error': str(err)}
+
+    finally:
+        if cursor:
+            cursor.close()
+        if db:
+            db.close()
+
 
 def delete_quiz_query(employer_id, quiz_id):
     """
