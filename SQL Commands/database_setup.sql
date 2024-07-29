@@ -14,6 +14,7 @@ CREATE TABLE Quiz (
     EmployerID int NOT NULL,
     Title varchar(255) NOT NULL,
     QuizDescription varchar(255) NOT NULL,
+    Timer float(4,2) NOT NULL,
     PRIMARY KEY (ID),
     UNIQUE (ID),
     FOREIGN KEY (EmployerID) REFERENCES Employer(ID) ON DELETE CASCADE
