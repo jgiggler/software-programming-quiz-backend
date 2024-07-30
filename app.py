@@ -66,25 +66,29 @@ def create_quiz():
     quiz_title = data.get('title')
     quiz_description = data.get('description')
     timer = data.get('timer')
-
-    quiz_data = data.get('0')
-    Question = quiz_data.get('question')
-    QuestionType = quiz_data.get('type')
-    Answer = quiz_data.get('answers')
-    is_correct = quiz_data.get('correctAnswers')
-
-    # Run query and retrieve the result
+    # Insert into quiz table
     QuizID = dba.create_quiz_query(employer_id, quiz_title, quiz_description, timer)
     if 'error' in QuizID:
         return jsonify({'error': QuizID['error']}), 500
-    QuestionID = dba.create_question_query(QuizID, Question, QuestionType)
-    if 'error' in QuestionID:
-        return jsonify({'error': QuestionID['error']}), 500
-    AnswerID = dba.create_answer_query(QuestionID, Answer, is_correct)
-    if 'error' in AnswerID:
-        return jsonify({'error': AnswerID['error']}), 500
 
-    return jsonify(QuizID), 201
+    questions = data.get('0')
+    for question in questions:
+        Question = question.get('question')
+        QuestionType = question.get('type')
+        # Insert into question table
+        QuestionID = dba.create_question_query(QuizID, Question, QuestionType)
+        if 'error' in QuestionID:
+            return jsonify({'error': QuestionID['error']}), 500
+        Answer = question.get('answers')
+        correct_answer_index = question.get('correctAnswers')
+        for index, answer in enumerate(Answer):
+            # Insert into answer table
+            is_correct = index in correct_answer_index
+            AnswerID = dba.create_answer_query(QuestionID, Answer, is_correct)
+            if 'error' in AnswerID:
+                return jsonify({'error': AnswerID['error']}), 500
+
+    return jsonify({'message': '“success, quiz created”'}), 400
 
 
 @app.route("/delete-quiz", methods=["POST"])
