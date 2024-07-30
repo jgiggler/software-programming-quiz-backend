@@ -71,20 +71,25 @@ def create_quiz():
     if 'error' in QuizID:
         return jsonify({'error': QuizID['error']}), 500
 
-    questions = data.get('0')
+    questions = data.get('questions')
     for question in questions:
-        Question = question.get('question')
+        QuestionText = question.get('question')
         QuestionType = question.get('type')
         # Insert into question table
-        QuestionID = dba.create_question_query(QuizID, Question, QuestionType)
+        QuestionID = dba.create_question_query(QuizID, QuestionText, QuestionType)
         if 'error' in QuestionID:
             return jsonify({'error': QuestionID['error']}), 500
-        Answer = question.get('answers')
-        correct_answer_index = question.get('correctAnswers')
-        for index, answer in enumerate(Answer):
+        answers = question.get('answers')
+        correctAnswer = question.get('correctAnswers') # int
+        counter = 0
+        for answer in answers:
             # Insert into answer table
-            is_correct = index in correct_answer_index
-            AnswerID = dba.create_answer_query(QuestionID, Answer, is_correct)
+            if correctAnswer == counter:
+                is_correct = True
+            else:
+                is_correct = False
+            counter += 1
+            AnswerID = dba.create_answer_query(QuestionID, answer, is_correct)
             if 'error' in AnswerID:
                 return jsonify({'error': AnswerID['error']}), 500
 
