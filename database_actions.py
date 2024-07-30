@@ -72,7 +72,7 @@ def create_quiz_query(employer_id, quiz_title, quiz_description, timer):
     try:
         db = DatabaseConnection()
         # Insert into Quiz table
-        query = "INSERT INTO Quiz (employer_id, title, description, timer) VALUES (%s, %s, %s, %i)"
+        query = "INSERT INTO Quiz (EmployerID, Title, QuizDescription, Timer) VALUES (%s, %s, %s, %s)"
         data = (employer_id, quiz_title, quiz_description, timer,)
         cursor = db.execute(query, data)
         db.commit()
@@ -91,7 +91,7 @@ def create_quiz_query(employer_id, quiz_title, quiz_description, timer):
 def create_question_query(QuizID, Question, QuestionType):
     """
     /create-quiz
-    TODO
+    tested with valid inputs
     """
     db = None
     cursor = None
@@ -120,7 +120,7 @@ def create_question_query(QuizID, Question, QuestionType):
 def create_answer_query(QuestionID, Answer, is_correct):
     """
     /create-quiz
-    TODO
+    tested with valid input
     """
     db = None
     cursor = None
