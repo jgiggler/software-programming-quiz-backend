@@ -252,8 +252,6 @@ def quiz_results_query(employer_id, quiz_id):
         data = (quiz_id,)
 
         cursor = db.execute(query, data)
-
-
         return {'message': 'success'}
 
     except mysql.connector.Error as err:
