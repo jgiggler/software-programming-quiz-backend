@@ -66,6 +66,7 @@ def create_quiz():
     quiz_title = data.get('title')
     quiz_description = data.get('description')
     timer = data.get('timer')
+    print(quiz_description)
     # Insert into quiz table
     QuizID = dba.create_quiz_query(employer_id, quiz_title, quiz_description, timer)
     if 'error' in QuizID:
@@ -99,6 +100,7 @@ def create_quiz():
 @app.route("/delete-quiz", methods=["POST"])
 def delete_quiz():
     data = request.json
+    
     employer_id = data.get('employer_id')
     quiz_id = data.get('quiz_id')
 
@@ -167,12 +169,12 @@ def delete_user():
     return jsonify(result), 200
 
 
-@app.route("/quiz-results", methods=["GET"])
+@app.route("/quiz-results", methods=["POST"])
 def read_quiz_results():
     data = request.json
     employer_id = data.get('employer_id')
     quiz_id = data.get('quiz_id')
-
+    
     # Validate input
     if not employer_id or not quiz_id:
         return jsonify({'message': 'Missing employer id or quiz id!'}), 400

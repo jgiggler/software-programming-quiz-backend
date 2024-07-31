@@ -189,14 +189,23 @@ def user_quiz_query(employer_id):
         
         # Prepare and execute SQL query
         query = """
-        SELECT * FROM quiz WHERE EmployerID = %s
+        SELECT ID, Title, QuizDescription FROM quiz WHERE EmployerID = %s
         """
         data = (employer_id,)
         cursor = db.execute(query, data)
 
         # Fetch all results
         quizzes = cursor.fetchall()
-        return {'quizzes': quizzes}
+        quiz_id = []
+        title = []
+        description = []
+        for element in quizzes:
+            first, second, third = element
+            quiz_id.append(first)
+            title.append(second)
+            description.append(third)
+        
+        return {'quiz_id': [quiz_id], 'title': [title], 'description': [description]}
 
     except mysql.connector.Error as err:
         return {'error': str(err)}, 500
@@ -252,7 +261,10 @@ def quiz_results_query(employer_id, quiz_id):
         data = (quiz_id,)
 
         cursor = db.execute(query, data)
-        return {'message': 'success'}
+        candidates = cursor.fetchall()
+        # no candidates in DB currently pulling [] as of now
+        print(candidates)
+        return {'message': 'success', 'candidates': candidates}
 
     except mysql.connector.Error as err:
         return {'error': str(err)}, 500
