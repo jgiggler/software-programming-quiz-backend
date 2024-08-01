@@ -139,16 +139,15 @@ def send_quiz_link():
     
     # Validate input
     if not quiz_id or not candidate_email:
-        return jsonify({'error': 'Missing fields!'}), 400
+        return jsonify({'message': 'Missing fields!'}), 400
 
     for email in candidate_email:
-        print("email in loop: ", email)
         result = dba.send_quiz_link(quiz_id, email)
-        print("result :", result)
+
         if 'error' in result:
             return jsonify({'message': result['error']}), 500
-
-        send_email.send_email(email, result)
+        else:
+            send_email.send_email(email, result)
 
     return jsonify({'message': 'quizzes sent to emails successfully'}), 200
 
