@@ -33,8 +33,8 @@ CREATE TABLE Stats (
     Candidate_Email varchar(255) NOT NULL,
     Link_ID varchar(255) NOT NULL,
     Quiz_ID int NOT NULL,
-    Grade float(4,2) NOT NULL,
-    PRIMARY KEY (Candidate_Email, Quiz_ID),
+    Grade float(4,2) DEFAULT NULL,
+    PRIMARY KEY (Candidate_Email),
     UNIQUE (Link_ID),
     FOREIGN KEY (Quiz_ID) REFERENCES Quiz(ID) ON DELETE CASCADE
 );
