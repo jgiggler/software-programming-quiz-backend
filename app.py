@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import database_actions as dba
+import send_email
 # import mysql.connector
 # from mysql.connector import Error
 
@@ -133,21 +134,23 @@ def user_quiz():
 @app.route("/send-quiz-link", methods=["POST"])
 def send_quiz_link():
     data = request.json
-
-    employer_id = data.get('employer_id')
     quiz_id = data.get('quiz_id')
-    candidate_email = data.get('candidate_email')
+    candidate_email = data.get('candidate_emails')
     
     # Validate input
-    if not employer_id or not quiz_id or not candidate_email:
+    if not quiz_id or not candidate_email:
         return jsonify({'error': 'Missing fields!'}), 400
 
-    result = dba.send_quiz_link(employer_id, quiz_id, candidate_email)
+    for email in candidate_email:
+        print("email in loop: ", email)
+        result = dba.send_quiz_link(quiz_id, email)
+        print("result :", result)
+        if 'error' in result:
+            return jsonify({'message': result['error']}), 500
 
-    if 'error' in result:
-        return jsonify({'error': result['error']}), 500
+        send_email.send_email(email, result)
 
-    return jsonify(result), 200
+    return jsonify({'message': 'quizzes sent to emails successfully'}), 200
 
 @app.route("/delete-user", methods=["DELETE"])
 def delete_user():
