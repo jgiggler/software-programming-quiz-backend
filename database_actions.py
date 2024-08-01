@@ -216,7 +216,7 @@ def user_quiz_query(employer_id):
         if db:
             db.close()
 
-def send_quiz_link(candidate_email, quiz_id):
+def send_quiz_link(quiz_id, candidate_email):
     """
     /send-quiz
     tested with valid input
@@ -231,11 +231,9 @@ def send_quiz_link(candidate_email, quiz_id):
         unique_link = _generate_random_link()
         return_link = "software-quiz.com/" + unique_link
 
-        query = "INSERT INTO Stats (Quiz_ID, Candidate_email, Link_ID, Grade) VALUES (%s, %s, %s, %s)"
-        grade = 0
-        data = (quiz_id, candidate_email, return_link, grade)
-        print("data: ", data)
-        db.execute(query, data)
+        query = "INSERT INTO Stats (Quiz_ID, Candidate_Email, Link_ID) VALUES (%s, %s, %s)"
+        data = (int(quiz_id), str(candidate_email), str(return_link))
+        cursor = db.execute(query, data)
         db.commit()
 
         return return_link
