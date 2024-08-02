@@ -558,13 +558,17 @@ def get_quiz_details_by_id(quiz_id):
         # Structure the response data
         questions = []
         for question in quiz_questions:
-            question_id = question['ID']
-            question_text = question['Question']
-            question_type = question['QuestionType']
+            print(question)
+            question_id = question[0]
+            question_text = question[2]
+            question_type = question[3]
 
             # Get answers for each question
             answers_data = _get_question_answers(db, question_id)
-            answers = [answer['answer_text'] for answer in answers_data] if answers_data else []
+            print("answers_data :", answers_data)
+            answers = []
+            for answer in answers_data:
+                answers.append(answer[0])
 
             question_dict = {
                 'question_text': question_text,
@@ -604,5 +608,5 @@ def _get_quiz_questions(db, quiz_id):
     return cursor.fetchall()
 
 def _get_question_answers(db, question_id):
-    cursor = db.execute("SELECT answer_text FROM Answers WHERE QuestionID = %s", (question_id,))
+    cursor = db.execute("SELECT Answer FROM Answers WHERE QuestionID = %s", (question_id,))
     return cursor.fetchall()

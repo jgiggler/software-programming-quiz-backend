@@ -236,9 +236,7 @@ def submit_quiz():
 @app.route("/show-quiz/<link_id>", methods=["GET"])
 def show_quiz(link_id):
     # Get the quiz ID from the unique link
-    print(link_id)
     quiz_id = dba.get_quiz_id_by_link(link_id)
-    print(quiz_id)
 
     # Handle invalid link or missing quiz ID
     if not quiz_id:
@@ -246,7 +244,6 @@ def show_quiz(link_id):
 
     # Fetch quiz details
     result, status_code = dba.get_quiz_details_by_id(quiz_id)
-    print(result)
     return jsonify(result), status_code
 
 
