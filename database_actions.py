@@ -69,6 +69,7 @@ def create_quiz_query(employer_id, quiz_title, quiz_description, timer):
     """
     db = None
     cursor = None
+    
     try:
         db = DatabaseConnection()
         # Insert into Quiz table
@@ -78,7 +79,7 @@ def create_quiz_query(employer_id, quiz_title, quiz_description, timer):
         db.commit()
         quiz_id = int(cursor.lastrowid)
         return {'message': 'success, quiz created!', 'quiz_id': quiz_id}
-
+        
     except mysql.connector.Error as err:
         return {'error': str(err)}
 
@@ -102,11 +103,9 @@ def create_question_query(QuizID, Question, QuestionType):
 
         cursor = db.execute(query, data)
         db.commit()
+        question_id = int(cursor.lastrowid)
 
-        if cursor.rowcount is None:
-            return {'error': 'Quiz not found or you do not have permission to delete it'}
-
-        return {'message': 'success, quiz was deleted'}
+        return {'message': 'success', 'question_id': question_id}
 
     except mysql.connector.Error as err:
             return {'error': str(err)}
@@ -548,24 +547,22 @@ def get_quiz_details_by_id(quiz_id):
         db = DatabaseConnection()
         # Get quiz details
         quiz_details = _get_quiz_details(db, quiz_id)
-        print("quiz details: ", quiz_details)
         if not quiz_details:
             return {'message': 'Quiz not found!'}, 404
 
         # Get quiz questions
         quiz_questions = _get_quiz_questions(db, quiz_id)
-
+        print("quiz questions: ", quiz_questions)
         # Structure the response data
         questions = []
         for question in quiz_questions:
-            print(question)
             question_id = question[0]
             question_text = question[2]
             question_type = question[3]
 
             # Get answers for each question
             answers_data = _get_question_answers(db, question_id)
-            print("answers_data :", answers_data)
+            print("answers: ", answers_data)
             answers = []
             for answer in answers_data:
                 answers.append(answer[0])
@@ -587,7 +584,7 @@ def get_quiz_details_by_id(quiz_id):
             'questions': questions
         }
         print(response_data)
-        return response_data, 200
+        return response_data
 
     except mysql.connector.Error as err:
         return {'message': str(err)}, 500

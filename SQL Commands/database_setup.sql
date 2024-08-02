@@ -43,7 +43,7 @@ CREATE TABLE Answers (
     ID int NOT NULL AUTO_INCREMENT,
     QuestionID int NOT NULL,
     Answer varchar(255) NOT NULL,
-    is_correct BOOL NOT NULL,
+    is_correct VARCHAR(255) NOT NULL,
     PRIMARY KEY (ID),
     FOREIGN KEY (QuestionID) REFERENCES Questions(ID) ON DELETE CASCADE
 );
