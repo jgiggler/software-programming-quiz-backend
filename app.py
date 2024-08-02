@@ -67,9 +67,10 @@ def create_quiz():
     quiz_title = data.get('title')
     quiz_description = data.get('description')
     timer = data.get('timer')
-    print(quiz_description)
     # Insert into quiz table
     QuizID = dba.create_quiz_query(employer_id, quiz_title, quiz_description, timer)
+    quiz_id = QuizID.get('quiz_id')
+
     if 'error' in QuizID:
         return jsonify({'error': QuizID['error']}), 500
 
@@ -77,25 +78,44 @@ def create_quiz():
     for question in questions:
         QuestionText = question.get('question')
         QuestionType = question.get('type')
-        # Insert into question table
-        QuestionID = dba.create_question_query(QuizID, QuestionText, QuestionType)
-        if 'error' in QuestionID:
-            return jsonify({'error': QuestionID['error']}), 500
         answers = question.get('answers')
-        correctAnswer = question.get('correctAnswers') # int
-        counter = 0
-        for answer in answers:
-            # Insert into answer table
-            if correctAnswer == counter:
-                is_correct = True
-            else:
-                is_correct = False
-            counter += 1
-            AnswerID = dba.create_answer_query(QuestionID, answer, is_correct)
+        correctAnswer = question.get('correctAnswers')
+        # Insert into question table
+        QuestionID = dba.create_question_query(quiz_id, QuestionText, QuestionType)
+        question_id = QuestionID.get('question_id')
+        print("Correct Answers: ",correctAnswer)
+        
+        if QuestionType == 'free-form':
+            is_correct = correctAnswer[0]
+            answer = 'free-form'
+            AnswerID = dba.create_answer_query(question_id, answer, is_correct)
             if 'error' in AnswerID:
-                return jsonify({'error': AnswerID['error']}), 500
+                return jsonify({'message': AnswerID['error']}), 500
+        
+        elif QuestionType == 'true-false':
+            print(correctAnswer)
+            answer = 'true-false'
+            if correctAnswer[0] == 0:
+                is_correct = 'True'
+                AnswerID = dba.create_answer_query(question_id, answer, is_correct)
+                if 'error' in AnswerID:
+                    return jsonify({'message': AnswerID['error']}), 500
+            elif correctAnswer[0] == 1:
+                is_correct = 'False'
+                AnswerID = dba.create_answer_query(question_id, answer, is_correct)
+                if 'error' in AnswerID:
+                    return jsonify({'message': AnswerID['error']}), 500
+        else:
+            
+            for index, answer in enumerate(answers):
+                is_correct = index in correctAnswer
+                AnswerID = dba.create_answer_query(question_id, answer, is_correct)
+                if 'error' in AnswerID:
+                    return jsonify({'message': AnswerID['error']}), 500
+        
+        
 
-    return jsonify({'message': '“success, quiz created”'}), 400
+    return jsonify({'message': '“success, quiz created”'}), 200
 
 
 @app.route("/delete-quiz", methods=["POST"])
@@ -147,7 +167,7 @@ def send_quiz_link():
         if 'error' in result:
             return jsonify({'message': result['error']}), 500
         else:
-            send_email.send_email(email, result)
+            send_email.send_candidate_email(email, result)
 
     return jsonify({'message': 'quizzes sent to emails successfully'}), 200
 
@@ -231,26 +251,20 @@ def submit_quiz():
         return jsonify({'message': result['error']}), 400
 
     return jsonify(result), 200
-    return
 
 
-@app.route("/show-quiz", methods=["POST"])
-def show_quiz_query():
-    data = request.json
-    quiz_id = data.get('quiz_id')
+@app.route("/show-quiz/<link_id>", methods=["GET"])
+def show_quiz(link_id):
+    # Get the quiz ID from the unique link
+    quiz_id = dba.get_quiz_id_by_link(link_id)
 
-    # Validate input
+    # Handle invalid link or missing quiz ID
     if not quiz_id:
-        return jsonify({'message': 'quiz_id is required!'}), 400
+        return jsonify({'message': 'Invalid link or Quiz not found!'}), 404
 
-    # Call the function to update user
-    result = dba.show_quiz_query(quiz_id)
-
-    # Handle the result
-    if 'error' in result:
-        return jsonify({'message': result['error']}), 400
-
-    return jsonify(result), 200
+    # Fetch quiz details
+    result = dba.get_quiz_details_by_id(quiz_id)
+    return jsonify(result)
 
 
 # Listener

@@ -69,6 +69,7 @@ def create_quiz_query(employer_id, quiz_title, quiz_description, timer):
     """
     db = None
     cursor = None
+    
     try:
         db = DatabaseConnection()
         # Insert into Quiz table
@@ -78,7 +79,7 @@ def create_quiz_query(employer_id, quiz_title, quiz_description, timer):
         db.commit()
         quiz_id = int(cursor.lastrowid)
         return {'message': 'success, quiz created!', 'quiz_id': quiz_id}
-
+        
     except mysql.connector.Error as err:
         return {'error': str(err)}
 
@@ -102,11 +103,9 @@ def create_question_query(QuizID, Question, QuestionType):
 
         cursor = db.execute(query, data)
         db.commit()
+        question_id = int(cursor.lastrowid)
 
-        if cursor.rowcount is None:
-            return {'error': 'Quiz not found or you do not have permission to delete it'}
-
-        return {'message': 'success, quiz was deleted'}
+        return {'message': 'success', 'question_id': question_id}
 
     except mysql.connector.Error as err:
             return {'error': str(err)}
@@ -229,14 +228,14 @@ def send_quiz_link(quiz_id, candidate_email):
         
         # Prepare and execute SQL query
         unique_link = _generate_random_link()
-        return_link = "software-quiz.com/" + unique_link
 
         query = "INSERT INTO Stats (Quiz_ID, Candidate_Email, Link_ID) VALUES (%s, %s, %s)"
-        data = (int(quiz_id), str(candidate_email), str(return_link))
+        data = (int(quiz_id), str(candidate_email), str(unique_link))
         cursor = db.execute(query, data)
         db.commit()
 
-        return return_link
+        print(unique_link)
+        return unique_link
 
     except mysql.connector.Error as err:
         return {'error': str(err)}, 500
@@ -519,3 +518,92 @@ def update_user(employer_id, email=None, password=None):
             cursor.close()
         if db:
             db.close()
+
+
+def get_quiz_id_by_link(link_id):
+  db = None
+  cursor = None
+  try:
+      db = DatabaseConnection()
+      query = "SELECT Quiz_ID FROM Stats WHERE Link_ID = %s"
+      cursor = db.execute(query, (link_id,))
+      result = cursor.fetchone()
+      if result:
+          return result[0]
+      else:
+          return None
+  except mysql.connector.Error as err:
+      return {'error': str(err)}
+  finally:
+      if cursor:
+          cursor.close()
+      if db:
+          db.close()
+
+def get_quiz_details_by_id(quiz_id):
+    db = None
+    cursor = None
+    try:
+        db = DatabaseConnection()
+        # Get quiz details
+        quiz_details = _get_quiz_details(db, quiz_id)
+        if not quiz_details:
+            return {'message': 'Quiz not found!'}, 404
+
+        # Get quiz questions
+        quiz_questions = _get_quiz_questions(db, quiz_id)
+        print("quiz questions: ", quiz_questions)
+        # Structure the response data
+        questions = []
+        for question in quiz_questions:
+            question_id = question[0]
+            question_text = question[2]
+            question_type = question[3]
+
+            # Get answers for each question
+            answers_data = _get_question_answers(db, question_id)
+            print("answers: ", answers_data)
+            answers = []
+            for answer in answers_data:
+                answers.append(answer[0])
+
+            question_dict = {
+                'question_text': question_text,
+                'question_type': question_type,
+                'answers': answers
+            }
+
+            questions.append(question_dict)
+        
+        response_data = {
+            'employer_id': quiz_details[1],
+            'quiz_id': quiz_details[0],
+            'title': quiz_details[2],
+            'description': quiz_details[3],
+            'timer': quiz_details[4],
+            'questions': questions
+        }
+        print(response_data)
+        return response_data
+
+    except mysql.connector.Error as err:
+        return {'message': str(err)}, 500
+
+    finally:
+        if cursor:
+            cursor.close()
+        if db:
+            db.close()
+
+
+def _get_quiz_details(db, quiz_id):
+    cursor = db.execute("SELECT * FROM Quiz WHERE ID = %s", (quiz_id,))
+    return cursor.fetchone()
+
+def _get_quiz_questions(db, quiz_id):
+    cursor = db.execute("SELECT * FROM Questions WHERE QuizID = %s", (quiz_id,))
+    return cursor.fetchall()
+
+def _get_question_answers(db, question_id):
+    cursor = db.execute("SELECT Answer FROM Answers WHERE QuestionID = %s", (question_id,))
+    return cursor.fetchall()
