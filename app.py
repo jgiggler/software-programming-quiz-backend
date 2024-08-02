@@ -147,7 +147,7 @@ def send_quiz_link():
         if 'error' in result:
             return jsonify({'message': result['error']}), 500
         else:
-            send_email.send_email(email, result)
+            send_email.send_candidate_email(email, result)
 
     return jsonify({'message': 'quizzes sent to emails successfully'}), 200
 
@@ -231,26 +231,23 @@ def submit_quiz():
         return jsonify({'message': result['error']}), 400
 
     return jsonify(result), 200
-    return
 
 
-@app.route("/show-quiz", methods=["POST"])
-def show_quiz_query():
-    data = request.json
-    quiz_id = data.get('quiz_id')
+@app.route("/show-quiz/<link_id>", methods=["GET"])
+def show_quiz(link_id):
+    # Get the quiz ID from the unique link
+    print(link_id)
+    quiz_id = dba.get_quiz_id_by_link(link_id)
+    print(quiz_id)
 
-    # Validate input
+    # Handle invalid link or missing quiz ID
     if not quiz_id:
-        return jsonify({'message': 'quiz_id is required!'}), 400
+        return jsonify({'message': 'Invalid link or Quiz not found!'}), 404
 
-    # Call the function to update user
-    result = dba.show_quiz_query(quiz_id)
-
-    # Handle the result
-    if 'error' in result:
-        return jsonify({'message': result['error']}), 400
-
-    return jsonify(result), 200
+    # Fetch quiz details
+    result, status_code = dba.get_quiz_details_by_id(quiz_id)
+    print(result)
+    return jsonify(result), status_code
 
 
 # Listener
