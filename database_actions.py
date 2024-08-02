@@ -548,7 +548,7 @@ def get_quiz_details_by_id(quiz_id):
         db = DatabaseConnection()
         # Get quiz details
         quiz_details = _get_quiz_details(db, quiz_id)
-        print("quiz details: ", )
+        print("quiz details: ", quiz_details)
         if not quiz_details:
             return {'message': 'Quiz not found!'}, 404
 
@@ -575,13 +575,14 @@ def get_quiz_details_by_id(quiz_id):
             questions.append(question_dict)
         
         response_data = {
-            'quiz_id': quiz_details['ID'],
-            'title': quiz_details['Title'],
-            'description': quiz_details['QuizDescription'],
-            'timer': quiz_details['Timer'],
+            'employer_id': quiz_details[1],
+            'quiz_id': quiz_details[0],
+            'title': quiz_details[2],
+            'description': quiz_details[3],
+            'timer': quiz_details[4],
             'questions': questions
         }
-
+        print(response_data)
         return response_data, 200
 
     except mysql.connector.Error as err:
