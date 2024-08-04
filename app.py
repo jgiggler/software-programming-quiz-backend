@@ -194,6 +194,7 @@ def delete_user():
 @app.route("/quiz-results", methods=["POST"])
 def read_quiz_results():
     data = request.json
+    print(f"data: {data}")
     employer_id = data.get('employer_id')
     quiz_id = data.get('quiz_id')
     
@@ -235,19 +236,23 @@ def update_user():
 @app.route("/submit-quiz", methods=["POST"])
 def submit_quiz():
     data = request.json
+    print(f"\n\ndata: {data} \n\n")
     quiz_id = data.get('quiz_id')
-    candidate_email = data.get('candidate_email')
-    quiz_data = data.get('quiz_data')
+    candidate_id = data.get('candidateID')
+    quiz_data = data.get('quizData')
+    print(f"\n\nquiz_data: {quiz_data}\n\n")
+    print(f"quiz_id: {quiz_id}, candidateID: {candidate_id}")
 
     # Validate input
-    if not quiz_id or candidate_email or quiz_data:
-        return jsonify({'message': 'quiz_id, candidate_email, or quiz_data is required!'}), 400
+    if not quiz_id or not candidate_id or not quiz_data:
+        return jsonify({'message': 'quiz_id, candidateID, or quiz_data is required!'}), 400
 
     # Call the function to update user
-    result = dba.submit_quiz_query(quiz_id, candidate_email, quiz_data)
+    result = dba.submit_quiz_query(quiz_id, candidate_id, quiz_data)
 
     # Handle the result
     if 'error' in result:
+        print("ERROR HAS OCCURRED")
         return jsonify({'message': result['error']}), 400
 
     return jsonify(result), 200
