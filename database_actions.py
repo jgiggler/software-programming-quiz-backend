@@ -255,7 +255,7 @@ def quiz_results_query(employer_id, quiz_id):
     cursor = None
     try:
         db = DatabaseConnection()
-        query = "SELECT candidate_email, grade FROM stats WHERE quiz_id = %s"
+        query = "SELECT candidate_email, grade FROM stats WHERE quiz_id = %s ORDER BY grade DESC"
         data = (quiz_id,)
 
         cursor = db.execute(query, data)
