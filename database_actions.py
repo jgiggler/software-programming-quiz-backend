@@ -259,10 +259,15 @@ def quiz_results_query(employer_id, quiz_id):
         data = (quiz_id,)
 
         cursor = db.execute(query, data)
-        candidates = cursor.fetchall()
+        candidate_results = cursor.fetchall()
         # no candidates in DB currently pulling [] as of now
-        print(candidates)
-        return {'message': 'success', 'candidates': candidates}
+        candidate_emails = []
+        grades=[]
+        for email in candidate_results:
+            candidate_emails.append(email[0])
+        for grade in candidate_results:
+            grades.append(grade[1])
+        return {'message': 'success', 'candidate_email': candidate_emails, 'grades': grades}
 
     except mysql.connector.Error as err:
         return {'error': str(err)}, 500
@@ -273,7 +278,7 @@ def quiz_results_query(employer_id, quiz_id):
         if db:
             db.close()
 
-def submit_quiz_query(quiz_id, candidate_email, quiz_data):
+def submit_quiz_query(quiz_id, candidate_id, quiz_data):
     """
     /submit-quiz
     Handles the quiz answers and UPDATES the grade into Stats table
@@ -283,17 +288,13 @@ def submit_quiz_query(quiz_id, candidate_email, quiz_data):
 
     try:
         db = DatabaseConnection()
-        question_ids = list(quiz_data.keys())
-        correct_answers = _get_correct_answers(db, question_ids=question_ids)
-        correct_answers_dict = {item['question_id']: item['answer_text'] for item in correct_answers}
+        answers = list(quiz_data.values())
+        question_ids = _get_question_ids(db, quiz_id)
+        is_correct_array = _find_correct_answers(db, question_ids, answers)
 
-        total_questions = len(quiz_data)
-        correct_count = sum(1 for qid, ans in quiz_data.items() if correct_answers_dict.get(qid) == ans)
-
-        grade = correct_count / total_questions
-
-        query = "UPDATE Stats SET grade = %s WHERE candidate_email = %s"
-        data = (grade, candidate_email,)
+        grade = sum(is_correct_array) / len(is_correct_array)
+        query = "UPDATE Stats SET grade = %s WHERE link_id = %s"
+        data = (grade, candidate_id,)
         db.execute(query, data)
         db.commit()
 
@@ -308,11 +309,44 @@ def submit_quiz_query(quiz_id, candidate_email, quiz_data):
         if db:
             db.close()
     
-def _get_correct_answers(db, question_ids):
+def _get_question_ids(db, quiz_id):
     # Prepare and execute SQL query to get the correct answers for the given question IDs
-    format_strings = ','.join(['%s'] * len(question_ids))
-    db.execute(f"SELECT question_id, answer_text FROM Answers WHERE question_id IN ({format_strings}) AND is_correct = TRUE", tuple(question_ids))
-    return db.fetchall()
+    #format_strings = ','.join(['%s'] * len(question_ids))
+    cursor = db.execute("SELECT ID FROM questions WHERE quizID=%s", (quiz_id,))
+    result = cursor.fetchall()
+    cleaned_result = [item[0] for item in result]
+    return cleaned_result
+
+def _find_correct_answers(db, question_ids, answers):
+    query = "SELECT is_correct FROM Answers WHERE QuestionID = %s AND answer= %s"
+    results = []
+    temp_results = []
+    for i in range(len(question_ids)):
+        if type(answers[i]) is list:
+            for j in range(len(answers[i])):
+                cursor = db.execute(query, (question_ids[i], answers[i][j],))
+                is_correct = int(cursor.fetchone()[0])
+                temp_results.append(is_correct)
+            if sum(temp_results) / len(temp_results) == 1:
+                results.append(1)
+            else:
+                results.append(0)
+        elif answers[i] == "True" or answers[i] == "False":
+            cursor = db.execute(query, (question_ids[i], "true-false",))
+            is_correct = cursor.fetchone()[0]
+            results.append(1 if is_correct == answers[i] else 0)
+        else:
+            cursor = db.execute(query, (question_ids[i], "free-form",))
+            result_answer = cursor.fetchone()
+            if not result_answer:
+                cursor = db.execute(query, (question_ids[i], answers[i],))
+                is_correct = int(cursor.fetchone()[0])
+                results.append(is_correct)
+            else:
+                is_correct = result_answer[0]
+                results.append(1 if is_correct == answers[i] else 0)
+        
+    return results
 
 def show_quiz_query(quiz_id):
     """
@@ -552,7 +586,6 @@ def get_quiz_details_by_id(quiz_id):
 
         # Get quiz questions
         quiz_questions = _get_quiz_questions(db, quiz_id)
-        print("quiz questions: ", quiz_questions)
         # Structure the response data
         questions = []
         for question in quiz_questions:
@@ -562,7 +595,6 @@ def get_quiz_details_by_id(quiz_id):
 
             # Get answers for each question
             answers_data = _get_question_answers(db, question_id)
-            print("answers: ", answers_data)
             answers = []
             for answer in answers_data:
                 answers.append(answer[0])
@@ -583,7 +615,6 @@ def get_quiz_details_by_id(quiz_id):
             'timer': quiz_details[4],
             'questions': questions
         }
-        print(response_data)
         return response_data
 
     except mysql.connector.Error as err:

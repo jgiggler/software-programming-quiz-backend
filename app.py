@@ -83,7 +83,6 @@ def create_quiz():
         # Insert into question table
         QuestionID = dba.create_question_query(quiz_id, QuestionText, QuestionType)
         question_id = QuestionID.get('question_id')
-        print("Correct Answers: ",correctAnswer)
         
         if QuestionType == 'free-form':
             is_correct = correctAnswer[0]
@@ -93,7 +92,6 @@ def create_quiz():
                 return jsonify({'message': AnswerID['error']}), 500
         
         elif QuestionType == 'true-false':
-            print(correctAnswer)
             answer = 'true-false'
             if correctAnswer[0] == 0:
                 is_correct = 'True'
@@ -139,7 +137,6 @@ def delete_quiz():
 def user_quiz():
     data = request.json
     employer_id = data.get('employer_id')
-    print(employer_id)
     # Validate input
     if not employer_id:
         return jsonify({'error': 'Employer ID is required!'}), 400
@@ -217,7 +214,6 @@ def update_user():
     employer_id = data.get('employer_id')
     email = data.get('email')
     password = data.get('password')
-    print(employer_id, email, password)
 
     # Validate input
     if not employer_id:
@@ -236,15 +232,15 @@ def update_user():
 def submit_quiz():
     data = request.json
     quiz_id = data.get('quiz_id')
-    candidate_email = data.get('candidate_email')
-    quiz_data = data.get('quiz_data')
+    candidate_id = data.get('candidateID')
+    quiz_data = data.get('quizData')
 
     # Validate input
-    if not quiz_id or candidate_email or quiz_data:
-        return jsonify({'message': 'quiz_id, candidate_email, or quiz_data is required!'}), 400
+    if not quiz_id or not candidate_id or not quiz_data:
+        return jsonify({'message': 'quiz_id, candidateID, or quiz_data is required!'}), 400
 
     # Call the function to update user
-    result = dba.submit_quiz_query(quiz_id, candidate_email, quiz_data)
+    result = dba.submit_quiz_query(quiz_id, candidate_id, quiz_data)
 
     # Handle the result
     if 'error' in result:
