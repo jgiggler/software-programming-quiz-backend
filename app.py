@@ -194,7 +194,6 @@ def delete_user():
 @app.route("/quiz-results", methods=["POST"])
 def read_quiz_results():
     data = request.json
-    print(f"data: {data}")
     employer_id = data.get('employer_id')
     quiz_id = data.get('quiz_id')
     
