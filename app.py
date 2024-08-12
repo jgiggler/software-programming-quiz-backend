@@ -246,6 +246,13 @@ def submit_quiz():
     if 'error' in result:
         return jsonify({'message': result['error']}), 400
 
+    employer_email, candidate_email = dba.get_emails(candidate_id, quiz_id)
+    print(employer_email, candidate_email)
+    if 'error' in employer_email or 'error' in candidate_email:
+        return jsonify({'message': 'error'}), 400
+
+    send_email.send_employer_email(employer_email, candidate_email, quiz_id)
+    print("Email sent successfully")
     return jsonify(result), 200
 
 
