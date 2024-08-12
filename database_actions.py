@@ -638,3 +638,40 @@ def _get_quiz_questions(db, quiz_id):
 def _get_question_answers(db, question_id):
     cursor = db.execute("SELECT Answer FROM Answers WHERE QuestionID = %s", (question_id,))
     return cursor.fetchall()
+
+def get_emails(candidate_id, quiz_id):
+    db = None
+    cursor = None
+    try:
+        db = DatabaseConnection()
+
+        # Retrieve candidate_email from Stats table based on candidate_id
+        query = "SELECT Candidate_Email FROM Stats WHERE Link_ID = %s"
+        cursor = db.execute(query, (candidate_id,))
+        result = cursor.fetchone()
+        if not result:
+            return {'error': 'No candidate found with the provided candidate_id'}
+        
+        candidate_email = result[0]
+
+        # Retrieve employer_email from Quiz table based on quiz_id
+        query = "SELECT Employer.Email FROM Employer JOIN Quiz ON Employer.ID = Quiz.EmployerID WHERE Quiz.ID = %s"
+        cursor = db.execute(query, (quiz_id,))
+        
+        result = cursor.fetchone()
+        if not result:
+            return {'error': 'No employer found with the provided quiz_id'}
+        
+        employer_email = result[0]
+
+        return employer_email, candidate_email
+
+    except mysql.connector.Error as err:
+        return {'error': str(err)}
+
+    finally:
+        if cursor:
+            cursor.close()
+        if db:
+            db.close()
+
