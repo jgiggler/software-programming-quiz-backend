@@ -24,3 +24,5 @@ This is part of a Summer 2024 Oregon State University CS 467 Capstone Project. H
     - 'smtp_password' is the password generated when you enable SMTP permission.
 
 7. Deploy the Flask App with `python app.py`. By default, it will run on port 4546, but you can change that at the bottom of app.py.
+
+8. Deploy the frontend (link at the top) and you should be set!
