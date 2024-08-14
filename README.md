@@ -12,7 +12,7 @@ This is part of a Summer 2024 Oregon State University CS 467 Capstone Project. H
 
 4. Run `pip install flask python-dotenv mysql-connector-python flask_cors` to install required packages. Flask is a Python web application framework, Python Dotenv reads key-value pairs from a .env file (.env in this case) and sets them as environment variables, MySQL Connector/Python is a driver for communicating with MySQL servers, and Flask-CORS is a Flask extension for handling Cross Origin Resource Sharing (CORS). 
 
-5. Create a database in MySqlDB. Once you have made an account and created your database, you will need to run the code in database_setup.sql to set up your relational database. (If you are our grader, then you will have access to our database when we share our .env file with you so you can skip to step 7).
+5. Create a database in MySqlDB. Once you have made an account and created your database, you will need to run the code in database_setup.sql to set up your relational database. (If you are our grader, then you will have access to our database when we share our .env file with you. Simply replace the example.env with the .env that we give you and you can skip to step 7).
 
 6. Rename the example.env file to simply ".env" and fill in all of the blanks with your own information. 
     - 'user' is your MySqlDB username
